@@ -1,0 +1,121 @@
+:root {
+  --lego-yellow: #FFD500;
+  --lego-red: #D01012;
+  --lego-blue: #006CB7;
+  --lego-black: #1A1A1A;
+  --lego-dark-gray: #333333;
+  --lego-light-gray: #F5F5F5;
+  --lego-border-radius: 4px;
+  --transition-speed: 0.3s;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: var(--lego-light-gray);
+  color: var(--lego-black);
+}
+
+/* Кнопки */
+.lego-btn {
+  background-color: var(--lego-red);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--lego-border-radius);
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color var(--transition-speed);
+  
+  &:hover {
+    background-color: darken(#D01012, 10%);
+  }
+  
+  &.btn-yellow {
+    background-color: var(--lego-yellow);
+    color: var(--lego-black);
+    
+    &:hover {
+      background-color: darken(#FFD500, 10%);
+    }
+  }
+  
+  &.btn-blue {
+    background-color: var(--lego-blue);
+    
+    &:hover {
+      background-color: darken(#006CB7, 10%);
+    }
+  }
+}
+
+/* Контейнеры */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Формы */
+.form-group {
+  margin-bottom: 1rem;
+  
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+  }
+  
+  input, select, textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: var(--lego-border-radius);
+    border: 1px solid var(--lego-dark-gray);
+    
+    &:focus {
+      outline: none;
+      border-color: var(--lego-blue);
+      box-shadow: 0 0 0 2px rgba(0, 108, 183, 0.2);
+    }
+  }
+}
+
+/* Утилиты */
+.text-center {
+  text-align: center;
+}
+
+.mb-1 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-2 {
+  margin-bottom: 1rem;
+}
+
+.mb-3 {
+  margin-bottom: 1.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 2rem;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+} 

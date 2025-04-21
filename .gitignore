@@ -1,0 +1,52 @@
+# Зависимости
+/node_modules
+/.pnp
+.pnp.js
+
+# Тестирование
+/coverage
+
+# Сборка проекта
+/dist
+/build
+
+# Локальные файлы env
+.env.local
+.env.*.local
+
+# Логи
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Редакторы и IDE
+.idea
+.vscode
+.cursor
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Операционные системы
+.DS_Store
+Thumbs.db
+
+# Firebase
+.firebase/
+firebase-debug.log
+
+# Временные файлы
+*.log
+*.tmp
+*.temp
+.cache
+
+# Файлы yarn, если используется yarn
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+.pnp.*

@@ -106,8 +106,11 @@ export default {
   name: "MinifigureDetailsView",
   data() {
     return {
-      defaultSetImage: require("@/assets/default-set.jpg"),
-      defaultFigureImage: require("@/assets/default-figure.jpg"),
+      minifigure: null,
+      loading: true,
+      error: null,
+      defaultSetImage: require("@/assets/images/default-set.png"),
+      defaultFigureImage: require("@/assets/images/default-figure.png")
     };
   },
   computed: {

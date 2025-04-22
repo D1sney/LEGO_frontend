@@ -61,8 +61,8 @@
 
         <div
           v-if="
-            (collectionType === 'sets' && sets.length === 0) ||
-            (collectionType === 'minifigures' && minifigures.length === 0)
+            (collectionType === 'sets' && (!sets || sets.length === 0)) ||
+            (collectionType === 'minifigures' && (!minifigures || minifigures.length === 0))
           "
           class="no-results"
         >
@@ -84,9 +84,9 @@ export default {
       minifigures: [],
       loading: true,
       title: "Моя коллекция LEGO",
-      defaultSetImage: require("@/assets/default-set.jpg"),
-      defaultFigureImage: require("@/assets/default-figure.jpg"),
-      apiBaseUrl: "http://localhost:8000",
+      defaultSetImage: require("@/assets/images/default-set.png"),
+      defaultFigureImage: require("@/assets/images/default-figure.png"),
+      apiBaseUrl: "/api",
     };
   },
   computed: {
@@ -126,18 +126,46 @@ export default {
       }
     },
     async fetchSets() {
-      // В реальном приложении здесь будут учитываться фильтры
-      const response = await axios.get(`${this.apiBaseUrl}/sets/?limit=5`);
-      this.sets = response.data;
-      this.title = "Наборы LEGO";
+      try {
+        // В реальном приложении здесь будут учитываться фильтры
+        const response = await axios.get(`${this.apiBaseUrl}/sets/?limit=5`);
+        console.log("API Response (sets):", response.data);
+        
+        // Проверка структуры данных
+        if (Array.isArray(response.data)) {
+          this.sets = response.data;
+        } else {
+          console.error("Unexpected API response format for sets:", response.data);
+          this.sets = [];
+        }
+        
+        this.title = "Наборы LEGO";
+      } catch (error) {
+        console.error("Error fetching sets:", error);
+        this.sets = [];
+      }
     },
     async fetchMinifigures() {
-      // В реальном приложении здесь будут учитываться фильтры
-      const response = await axios.get(
-        `${this.apiBaseUrl}/minifigures/?limit=5`
-      );
-      this.minifigures = response.data;
-      this.title = "Минифигурки LEGO";
+      try {
+        // В реальном приложении здесь будут учитываться фильтры
+        const response = await axios.get(
+          `${this.apiBaseUrl}/minifigures/?limit=5`
+        );
+        console.log("API Response (minifigures):", response.data);
+        
+        // Проверка структуры данных
+        if (Array.isArray(response.data)) {
+          this.minifigures = response.data;
+        } else {
+          console.error("Unexpected API response format for minifigures:", response.data);
+          this.minifigures = [];
+        }
+        
+        this.title = "Минифигурки LEGO";
+      } catch (error) {
+        console.error("Error fetching minifigures:", error);
+        this.minifigures = [];
+      }
     },
     formatPrice(price) {
       return new Intl.NumberFormat("ru-RU").format(price);

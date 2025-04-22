@@ -26,7 +26,7 @@ export default {
     imageUrl() {
       return this.minifigure.face_photo && this.minifigure.face_photo.photo_url
         ? this.minifigure.face_photo.photo_url
-        : require("@/assets/default-figure.jpg");
+        : require("@/assets/images/default-figure.png");
     },
   },
   methods: {

@@ -13,7 +13,9 @@
             <div class="lego-card-image">
               <img
                 :src="
-                  set.face_photo ? set.face_photo.photo_url : defaultSetImage
+                  set.face_photo && set.face_photo.photo_url 
+                  ? set.face_photo.photo_url 
+                  : defaultSetImage
                 "
                 :alt="set.name"
               />
@@ -42,9 +44,9 @@
             <div class="lego-card-image">
               <img
                 :src="
-                  figure.face_photo
-                    ? figure.face_photo.photo_url
-                    : defaultFigureImage
+                  figure.face_photo && figure.face_photo.photo_url
+                  ? figure.face_photo.photo_url
+                  : defaultFigureImage
                 "
                 :alt="figure.name"
               />
@@ -128,7 +130,7 @@ export default {
     async fetchSets() {
       try {
         // В реальном приложении здесь будут учитываться фильтры
-        const response = await axios.get(`${this.apiBaseUrl}/sets/?limit=5`);
+        const response = await axios.get(`${this.apiBaseUrl}/sets/?limit=10`);
         console.log("API Response (sets):", response.data);
         
         // Проверка структуры данных
@@ -149,7 +151,7 @@ export default {
       try {
         // В реальном приложении здесь будут учитываться фильтры
         const response = await axios.get(
-          `${this.apiBaseUrl}/minifigures/?limit=5`
+          `${this.apiBaseUrl}/minifigures/?limit=10`
         );
         console.log("API Response (minifigures):", response.data);
         

@@ -1,13 +1,13 @@
 <template>
-  <div class="set-details">
-    <div v-if="loading" class="loading">
-      <p>Загрузка информации о наборе...</p>
-    </div>
-
-    <div v-else-if="set" class="set-detail-container">
+  <div class="set-details" v-if="set">
+    <div class="set-main">
       <div class="set-image">
         <img
-          :src="set.face_photo ? set.face_photo.photo_url : defaultSetImage"
+          :src="
+            set.face_photo && set.face_photo.photo_url
+              ? set.face_photo.photo_url
+              : defaultSetImage
+          "
           :alt="set.name"
         />
       </div>
@@ -68,7 +68,7 @@
           <div class="figure-card-image">
             <img
               :src="
-                figure.face_photo
+                figure.face_photo && figure.face_photo.photo_url
                   ? figure.face_photo.photo_url
                   : defaultFigureImage
               "
@@ -151,7 +151,7 @@ export default {
   animation: fadeIn 0.3s ease-in-out;
 }
 
-.set-detail-container {
+.set-main {
   display: flex;
   flex-wrap: wrap;
   gap: 2rem;

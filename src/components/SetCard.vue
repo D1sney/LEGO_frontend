@@ -28,9 +28,11 @@ export default {
   },
   computed: {
     imageUrl() {
-      return this.set.face_photo && this.set.face_photo.photo_url
-        ? this.set.face_photo.photo_url
-        : require("@/assets/images/default-set.png");
+      if (this.set.face_photo && this.set.face_photo.photo_url) {
+        return this.set.face_photo.photo_url;
+      } else {
+        return require("@/assets/images/default-set.png");
+      }
     },
     formattedPrice() {
       return new Intl.NumberFormat("ru-RU").format(this.set.price) + " ₽";

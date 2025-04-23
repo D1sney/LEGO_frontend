@@ -1,14 +1,10 @@
 <template>
-  <div class="minifigure-details">
-    <div v-if="loading" class="loading">
-      <p>Загрузка информации о минифигурке...</p>
-    </div>
-
-    <div v-else-if="minifigure" class="minifigure-detail-container">
+  <div class="minifigure-details" v-if="minifigure">
+    <div class="minifigure-main">
       <div class="minifigure-image">
         <img
           :src="
-            minifigure.face_photo
+            minifigure.face_photo && minifigure.face_photo.photo_url
               ? minifigure.face_photo.photo_url
               : defaultFigureImage
           "
@@ -54,7 +50,7 @@
         <div v-for="set in minifigure.sets" :key="set.set_id" class="set-card">
           <div class="set-card-image">
             <img
-              :src="set.face_photo ? set.face_photo.photo_url : defaultSetImage"
+              :src="set.face_photo && set.face_photo.photo_url ? set.face_photo.photo_url : defaultSetImage"
               :alt="set.name"
             />
           </div>
@@ -141,7 +137,7 @@ export default {
   animation: fadeIn 0.3s ease-in-out;
 }
 
-.minifigure-detail-container {
+.minifigure-main {
   display: flex;
   flex-wrap: wrap;
   gap: 2rem;

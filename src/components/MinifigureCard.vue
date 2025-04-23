@@ -24,9 +24,11 @@ export default {
   },
   computed: {
     imageUrl() {
-      return this.minifigure.face_photo && this.minifigure.face_photo.photo_url
-        ? this.minifigure.face_photo.photo_url
-        : require("@/assets/images/default-figure.png");
+      if (this.minifigure.face_photo && this.minifigure.face_photo.photo_url) {
+        return this.minifigure.face_photo.photo_url;
+      } else {
+        return require("@/assets/images/default-figure.png");
+      }
     },
   },
   methods: {

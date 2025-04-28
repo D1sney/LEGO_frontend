@@ -24,6 +24,10 @@
             <span class="label">Персонаж:</span>
             <span class="value">{{ minifigure.character_name }}</span>
           </div>
+          <div class="minifigure-meta-item" v-if="minifigure.price">
+            <span class="label">Цена:</span>
+            <span class="value price">{{ formatPrice(minifigure.price) }} ₽</span>
+          </div>
         </div>
 
         <div
@@ -198,6 +202,11 @@ export default {
 
     .value {
       font-size: 1.1rem;
+      
+      &.price {
+        color: var(--lego-red);
+        font-weight: bold;
+      }
     }
   }
 }

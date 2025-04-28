@@ -17,18 +17,22 @@
     <div class="search-panel" :class="{ 'search-panel-open': searchOpen }">
       <div class="search-filters">
         <div class="filter-section">
-          <h3>Коллекции</h3>
-          <div class="tag-list">
-            <span
-              class="tag"
-              v-for="tag in popularTags"
-              :key="tag.id"
-              :class="{ active: selectedTags.includes(tag.id) }"
-              @click="toggleTag(tag.id)"
-            >
-              {{ tag.name }}
-            </span>
-          </div>
+          <TagFilter 
+            title="Коллекции" 
+            :tags="availableTags" 
+            :selectedTags="selectedTags"
+            @toggle-tag="toggleTag"
+          />
+        </div>
+
+        <div class="filter-section">
+          <h3>Поиск</h3>
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            placeholder="Введите название или описание"
+            class="search-input"
+          />
         </div>
 
         <div class="filter-section">
@@ -39,6 +43,44 @@
               {{ year }}
             </option>
           </select>
+        </div>
+
+        <div class="filter-section">
+          <h3>Цена</h3>
+          <div class="price-range">
+            <input 
+              type="number" 
+              v-model="minPrice" 
+              placeholder="Мин. цена" 
+              class="price-input"
+            />
+            <span class="price-separator">-</span>
+            <input 
+              type="number" 
+              v-model="maxPrice" 
+              placeholder="Макс. цена" 
+              class="price-input"
+            />
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <h3>Количество деталей</h3>
+          <div class="piece-range">
+            <input 
+              type="number" 
+              v-model="minPieceCount" 
+              placeholder="Мин. кол-во" 
+              class="piece-input"
+            />
+            <span class="piece-separator">-</span>
+            <input 
+              type="number" 
+              v-model="maxPieceCount" 
+              placeholder="Макс. кол-во" 
+              class="piece-input"
+            />
+          </div>
         </div>
 
         <div class="filter-section">
@@ -76,30 +118,36 @@
 </template>
 
 <script>
+import axios from 'axios';
+import TagFilter from './components/TagFilter.vue';
+
 export default {
   name: "App",
+  components: {
+    TagFilter
+  },
   data() {
     return {
       searchOpen: false,
       selectedTags: [],
       yearFilter: "",
       collectionType: "sets",
-      popularTags: [
-        { id: 1, name: "Гарри Поттер" },
-        { id: 2, name: "Star Wars" },
-        { id: 3, name: "Супергерои" },
-        { id: 4, name: "Technic" },
-        { id: 5, name: "City" },
-        { id: 6, name: "Architecture" },
-        { id: 7, name: "Friends" },
-        { id: 8, name: "Creator" },
-      ],
-      years: [2023, 2022, 2021, 2020, 2019, 2018],
+      availableTags: [],
+      searchQuery: "",
+      minPrice: "",
+      maxPrice: "",
+      minPieceCount: "",
+      maxPieceCount: "",
+      years: [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018],
+      apiBaseUrl: "/api",
     };
   },
   methods: {
     toggleSearch() {
       this.searchOpen = !this.searchOpen;
+      if (this.searchOpen && this.availableTags.length === 0) {
+        this.fetchTags();
+      }
     },
     toggleTag(tagId) {
       if (this.selectedTags.includes(tagId)) {
@@ -108,18 +156,126 @@ export default {
         this.selectedTags.push(tagId);
       }
     },
+    async fetchTags() {
+      try {
+        const response = await axios.get(`${this.apiBaseUrl}/tags/`);
+        console.log("Теги получены:", response.data);
+        if (Array.isArray(response.data)) {
+          this.availableTags = response.data;
+        } else {
+          console.error("Неверный формат ответа API при получении тегов:", response.data);
+          this.availableTags = [];
+        }
+      } catch (error) {
+        console.error("Ошибка при загрузке тегов:", error);
+        this.availableTags = [];
+      }
+    },
     applyFilters() {
+      const query = {
+        type: this.collectionType
+      };
+      
+      if (this.selectedTags.length > 0) {
+        // Преобразуем ID тегов в их имена
+        const tagNames = this.selectedTags.map(tagId => {
+          const tag = this.availableTags.find(t => t.tag_id === tagId);
+          return tag ? tag.name : null;
+        }).filter(name => name !== null).join(',');
+        
+        if (tagNames) {
+          query.tag_names = tagNames;
+          query.tag_logic = "AND";
+        }
+      }
+      
+      if (this.yearFilter) {
+        query.year = this.yearFilter;
+      }
+      
+      if (this.searchQuery) {
+        query.search = this.searchQuery;
+      }
+      
+      if (this.minPrice) {
+        query.min_price = this.minPrice;
+      }
+      
+      if (this.maxPrice) {
+        query.max_price = this.maxPrice;
+      }
+      
+      if (this.minPieceCount) {
+        query.min_piece_count = this.minPieceCount;
+      }
+      
+      if (this.maxPieceCount) {
+        query.max_piece_count = this.maxPieceCount;
+      }
+      
       this.$router.push({
         name: "home",
-        query: {
-          tags: this.selectedTags.join(","),
-          year: this.yearFilter,
-          type: this.collectionType,
-        },
+        query: query
       });
+      
       this.searchOpen = false;
     },
   },
+  mounted() {
+    // Загружаем теги при первоначальной загрузке
+    this.fetchTags();
+    
+    // Восстанавливаем состояние фильтров из URL при загрузке страницы
+    const query = this.$route.query;
+    
+    if (query.type) {
+      this.collectionType = query.type;
+    }
+    
+    if (query.tag_names && this.availableTags.length > 0) {
+      const tagNames = query.tag_names.split(',');
+      this.selectedTags = this.availableTags
+        .filter(tag => tagNames.includes(tag.name))
+        .map(tag => tag.tag_id);
+    }
+    
+    if (query.year) {
+      this.yearFilter = query.year;
+    }
+    
+    if (query.search) {
+      this.searchQuery = query.search;
+    }
+    
+    if (query.min_price) {
+      this.minPrice = query.min_price;
+    }
+    
+    if (query.max_price) {
+      this.maxPrice = query.max_price;
+    }
+    
+    if (query.min_piece_count) {
+      this.minPieceCount = query.min_piece_count;
+    }
+    
+    if (query.max_piece_count) {
+      this.maxPieceCount = query.max_piece_count;
+    }
+  },
+  watch: {
+    availableTags: {
+      handler(newTags) {
+        if (newTags.length > 0 && this.$route.query.tag_names) {
+          const tagNames = this.$route.query.tag_names.split(',');
+          this.selectedTags = newTags
+            .filter(tag => tagNames.includes(tag.name))
+            .map(tag => tag.tag_id);
+        }
+      },
+      immediate: true
+    }
+  }
 };
 </script>
 
@@ -212,7 +368,7 @@ body {
     padding var(--transition-speed);
 
   &.search-panel-open {
-    max-height: 500px;
+    max-height: 800px;
     padding: 1rem;
   }
 }
@@ -231,12 +387,29 @@ body {
       font-size: 1rem;
     }
 
-    select {
+    select, input, .search-input {
       width: 100%;
       padding: 0.5rem;
       border-radius: var(--lego-border-radius);
       border: none;
     }
+  }
+}
+
+.price-range, .piece-range {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  .price-input, .piece-input {
+    flex: 1;
+    padding: 0.5rem;
+    border-radius: var(--lego-border-radius);
+    border: none;
+  }
+  
+  .price-separator, .piece-separator {
+    font-weight: bold;
   }
 }
 

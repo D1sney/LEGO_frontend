@@ -2,6 +2,19 @@
   <div class="home">
     <h2>{{ title }}</h2>
 
+    <div v-if="$route.query.tag_names" class="active-filters">
+      <div class="filter-label">Выбранные теги:</div>
+      <div class="active-tags">
+        <span 
+          v-for="(tagName, index) in $route.query.tag_names.split(',')" 
+          :key="index" 
+          class="active-tag"
+        >
+          {{ tagName }}
+        </span>
+      </div>
+    </div>
+
     <div class="collection-section">
       <div v-if="loading" class="loading">
         <p>Загрузка данных...</p>
@@ -57,6 +70,9 @@
                 <p><strong>Персонаж:</strong> {{ figure.character_name }}</p>
                 <p><strong>ID:</strong> {{ figure.minifigure_id }}</p>
               </div>
+              <div v-if="figure.price" class="lego-card-price">
+                {{ formatPrice(figure.price) }} ₽
+              </div>
             </div>
           </div>
         </div>
@@ -89,6 +105,7 @@ export default {
       defaultSetImage: require("@/assets/images/default-set.png"),
       defaultFigureImage: require("@/assets/images/default-figure.png"),
       apiBaseUrl: "/api",
+      tags: [],
     };
   },
   computed: {
@@ -96,8 +113,8 @@ export default {
       return this.$route.query.type || "sets";
     },
     selectedTags() {
-      const tags = this.$route.query.tags;
-      return tags ? tags.split(",").map(Number) : [];
+      const tagNames = this.$route.query.tag_names;
+      return tagNames ? tagNames.split(",") : [];
     },
     yearFilter() {
       return this.$route.query.year || "";
@@ -116,6 +133,11 @@ export default {
       this.loading = true;
 
       try {
+        // Загружаем теги, если они еще не загружены
+        if (this.tags.length === 0) {
+          await this.fetchTags();
+        }
+        
         if (this.collectionType === "sets") {
           await this.fetchSets();
         } else {
@@ -129,8 +151,46 @@ export default {
     },
     async fetchSets() {
       try {
-        // В реальном приложении здесь будут учитываться фильтры
-        const response = await axios.get(`${this.apiBaseUrl}/sets/?limit=10`);
+        // Формируем параметры запроса на основе фильтров
+        const params = {};
+        
+        // Добавляем лимит по умолчанию
+        params.limit = 10;
+        
+        // Добавляем поисковый запрос, если он есть
+        if (this.$route.query.search) {
+          params.search = this.$route.query.search;
+        }
+        
+        // Добавляем теги и логику объединения
+        if (this.$route.query.tag_names) {
+          params.tag_names = this.$route.query.tag_names;
+          params.tag_logic = 'AND';
+        }
+        
+        // Добавляем год выпуска
+        if (this.$route.query.year) {
+          params.year = this.$route.query.year;
+        }
+        
+        // Добавляем диапазон цен
+        if (this.$route.query.min_price) {
+          params.min_price = this.$route.query.min_price;
+        }
+        if (this.$route.query.max_price) {
+          params.max_price = this.$route.query.max_price;
+        }
+        
+        // Добавляем диапазон количества деталей
+        if (this.$route.query.min_piece_count) {
+          params.min_piece_count = this.$route.query.min_piece_count;
+        }
+        if (this.$route.query.max_piece_count) {
+          params.max_piece_count = this.$route.query.max_piece_count;
+        }
+        
+        // Выполняем запрос к API с параметрами
+        const response = await axios.get(`${this.apiBaseUrl}/sets/`, { params });
         console.log("API Response (sets):", response.data);
         
         // Проверка структуры данных
@@ -149,10 +209,38 @@ export default {
     },
     async fetchMinifigures() {
       try {
-        // В реальном приложении здесь будут учитываться фильтры
-        const response = await axios.get(
-          `${this.apiBaseUrl}/minifigures/?limit=10`
-        );
+        // Формируем параметры запроса на основе фильтров
+        const params = {};
+        
+        // Добавляем лимит по умолчанию
+        params.limit = 10;
+        
+        // Добавляем поисковый запрос, если он есть
+        if (this.$route.query.search) {
+          params.search = this.$route.query.search;
+        }
+        
+        // Добавляем теги и логику объединения
+        if (this.$route.query.tag_names) {
+          params.tag_names = this.$route.query.tag_names;
+          params.tag_logic = 'AND';
+        }
+        
+        // Добавляем год выпуска
+        if (this.$route.query.year) {
+          params.year = this.$route.query.year;
+        }
+        
+        // Добавляем диапазон цен
+        if (this.$route.query.min_price) {
+          params.min_price = this.$route.query.min_price;
+        }
+        if (this.$route.query.max_price) {
+          params.max_price = this.$route.query.max_price;
+        }
+        
+        // Выполняем запрос к API с параметрами
+        const response = await axios.get(`${this.apiBaseUrl}/minifigures/`, { params });
         console.log("API Response (minifigures):", response.data);
         
         // Проверка структуры данных
@@ -167,6 +255,20 @@ export default {
       } catch (error) {
         console.error("Error fetching minifigures:", error);
         this.minifigures = [];
+      }
+    },
+    async fetchTags() {
+      try {
+        const response = await axios.get(`${this.apiBaseUrl}/tags/`);
+        if (Array.isArray(response.data)) {
+          this.tags = response.data;
+        } else {
+          console.error("Unexpected API response format for tags:", response.data);
+          this.tags = [];
+        }
+      } catch (error) {
+        console.error("Error fetching tags:", error);
+        this.tags = [];
       }
     },
     formatPrice(price) {
@@ -282,6 +384,38 @@ export default {
   p {
     font-size: 1.2rem;
     color: var(--lego-dark-gray);
+  }
+}
+
+.active-filters {
+  background-color: white;
+  padding: 1rem;
+  border-radius: var(--lego-border-radius);
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  
+  .filter-label {
+    font-weight: bold;
+    color: var(--lego-dark-gray);
+  }
+  
+  .active-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .active-tag {
+    background-color: var(--lego-yellow);
+    color: var(--lego-black);
+    padding: 0.3rem 0.8rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: bold;
   }
 }
 </style>

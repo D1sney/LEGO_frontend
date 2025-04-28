@@ -9,6 +9,9 @@
         <p><strong>Персонаж:</strong> {{ minifigure.character_name }}</p>
         <p><strong>ID:</strong> {{ minifigure.minifigure_id }}</p>
       </div>
+      <div v-if="minifigure.price" class="minifigure-card-price">
+        {{ formattedPrice }}
+      </div>
     </div>
   </div>
 </template>
@@ -29,6 +32,9 @@ export default {
       } else {
         return require("@/assets/images/default-figure.png");
       }
+    },
+    formattedPrice() {
+      return new Intl.NumberFormat("ru-RU").format(this.minifigure.price) + " ₽";
     },
   },
   methods: {
@@ -97,6 +103,14 @@ export default {
         font-size: 0.9rem;
         color: var(--lego-dark-gray);
       }
+    }
+    
+    .minifigure-card-price {
+      font-weight: bold;
+      font-size: 1.2rem;
+      text-align: right;
+      color: var(--lego-red);
+      margin-top: 1rem;
     }
   }
 }

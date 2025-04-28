@@ -78,6 +78,9 @@
           <div class="figure-card-content">
             <h3>{{ figure.name }}</h3>
             <p><strong>Персонаж:</strong> {{ figure.character_name }}</p>
+            <div v-if="figure.price" class="figure-card-price">
+              {{ formatPrice(figure.price) }} ₽
+            </div>
             <router-link
               :to="`/minifigures/${figure.minifigure_id}`"
               class="view-details"
@@ -306,6 +309,12 @@ export default {
       font-size: 0.9rem;
       margin-bottom: 0.8rem;
       color: var(--lego-dark-gray);
+    }
+
+    .figure-card-price {
+      font-size: 0.9rem;
+      color: var(--lego-red);
+      font-weight: bold;
     }
 
     .view-details {

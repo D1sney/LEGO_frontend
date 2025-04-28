@@ -22,7 +22,12 @@
 
       <div v-else>
         <div v-if="collectionType === 'sets'" class="collection-grid">
-          <div v-for="set in sets" :key="set.set_id" class="lego-card">
+          <router-link 
+            v-for="set in sets" 
+            :key="set.set_id" 
+            :to="`/sets/${set.set_id}`" 
+            class="lego-card"
+          >
             <div class="lego-card-image">
               <img
                 :src="
@@ -42,16 +47,17 @@
               </div>
               <div class="lego-card-price">{{ formatPrice(set.price) }} ₽</div>
             </div>
-          </div>
+          </router-link>
         </div>
 
         <div
           v-else-if="collectionType === 'minifigures'"
           class="collection-grid"
         >
-          <div
+          <router-link
             v-for="figure in minifigures"
             :key="figure.minifigure_id"
+            :to="`/minifigures/${figure.minifigure_id}`"
             class="lego-card"
           >
             <div class="lego-card-image">
@@ -74,7 +80,7 @@
                 {{ formatPrice(figure.price) }} ₽
               </div>
             </div>
-          </div>
+          </router-link>
         </div>
 
         <div
@@ -319,6 +325,8 @@ export default {
   transition: transform 0.3s, box-shadow 0.3s;
   display: flex;
   flex-direction: column;
+  text-decoration: none;
+  color: inherit;
 
   &:hover {
     transform: translateY(-5px);

@@ -2,7 +2,7 @@
   <div id="app" class="lego-app">
     <header class="lego-header">
       <div class="lego-logo">
-        <img src="@/assets/logo.png" alt="LEGO Collection" />
+        <img src="@/assets/logo.png" alt="LEGO Logo">
         <h1>Моя коллекция LEGO</h1>
       </div>
 

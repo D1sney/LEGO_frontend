@@ -10,7 +10,7 @@ export default createStore({
     tags: [],
     loading: false,
     error: null,
-    apiBaseUrl: 'http://localhost:8000'
+    apiBaseUrl: '/api'
   },
   getters: {
     getSets: state => state.sets,

@@ -1,109 +1,118 @@
 <template>
-  <div class="minifigure-details" v-if="minifigure">
-    <div class="minifigure-main">
-      <div class="minifigure-image">
-        <img
-          :src="
-            minifigure.face_photo && minifigure.face_photo.photo_url
-              ? minifigure.face_photo.photo_url
-              : defaultFigureImage
-          "
-          :alt="minifigure.name"
-        />
-      </div>
-
-      <div class="minifigure-info">
-        <h1>{{ minifigure.name }}</h1>
-
-        <div class="minifigure-meta">
-          <div class="minifigure-meta-item">
-            <span class="label">ID минифигурки:</span>
-            <span class="value">{{ minifigure.minifigure_id }}</span>
-          </div>
-          <div class="minifigure-meta-item">
-            <span class="label">Персонаж:</span>
-            <span class="value">{{ minifigure.character_name }}</span>
-          </div>
-          <div class="minifigure-meta-item" v-if="minifigure.price">
-            <span class="label">Цена:</span>
-            <span class="value price">{{ formatPrice(minifigure.price) }} ₽</span>
-          </div>
-        </div>
-
-        <div
-          class="minifigure-tags"
-          v-if="minifigure.tags && minifigure.tags.length > 0"
-        >
-          <h3>Теги:</h3>
-          <div class="tag-list">
-            <span class="tag" v-for="tag in minifigure.tags" :key="tag.tag_id">
-              {{ tag.name }}
-            </span>
-          </div>
-        </div>
-      </div>
+  <div class="minifigure-details-container">
+    <div v-if="loading" class="loading-indicator">
+      <p>Загрузка данных о минифигурке...</p>
     </div>
+    
+    <div v-else-if="error" class="error-message">
+      <p>{{ error }}</p>
+      <button @click="retryFetch" class="retry-button">Повторить загрузку</button>
+    </div>
+    
+    <div class="minifigure-details" v-else-if="minifigure">
+      <div class="minifigure-main">
+        <div class="minifigure-images">
+          <PhotoGallery 
+            :photos="photoUrls" 
+            :altText="minifigure.name"
+            aspectRatio="1:1"
+          />
+        </div>
 
-    <div
-      v-if="minifigure && minifigure.sets && minifigure.sets.length > 0"
-      class="minifigure-sets"
-    >
-      <h2>Наборы с этой минифигуркой</h2>
+        <div class="minifigure-info">
+          <h1>{{ minifigure.name }}</h1>
 
-      <div class="sets-grid">
-        <div v-for="set in minifigure.sets" :key="set.set_id" class="set-card">
-          <div class="set-card-image">
-            <img
-              :src="set.face_photo && set.face_photo.photo_url ? set.face_photo.photo_url : defaultSetImage"
-              :alt="set.name"
-            />
+          <div class="minifigure-meta">
+            <div class="minifigure-meta-item">
+              <span class="label">ID минифигурки:</span>
+              <span class="value">{{ minifigure.minifigure_id }}</span>
+            </div>
+            <div class="minifigure-meta-item">
+              <span class="label">Персонаж:</span>
+              <span class="value">{{ minifigure.character_name }}</span>
+            </div>
+            <div class="minifigure-meta-item" v-if="minifigure.variant">
+              <span class="label">Вариант:</span>
+              <span class="value">{{ minifigure.variant }}</span>
+            </div>
+            <div class="minifigure-meta-item">
+              <span class="label">Год выпуска:</span>
+              <span class="value">{{ minifigure.release_year }}</span>
+            </div>
+            <div class="minifigure-meta-item" v-if="minifigure.price">
+              <span class="label">Цена:</span>
+              <span class="value price">{{ formatPrice(minifigure.price) }} ₽</span>
+            </div>
           </div>
-          <div class="set-card-content">
-            <h3>{{ set.name }}</h3>
-            <div class="set-card-details">
+
+          <div class="minifigure-tags" v-if="minifigure.tags && minifigure.tags.length > 0">
+            <h3>Теги:</h3>
+            <div class="tag-list">
+              <span class="tag" v-for="tag in minifigure.tags" :key="tag.tag_id">
+                {{ tag.name }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="minifigure && minifigure.sets && minifigure.sets.length > 0"
+        class="minifigure-sets"
+      >
+        <h2>Наборы с этой минифигуркой</h2>
+
+        <div class="sets-grid">
+          <div
+            v-for="set in minifigure.sets"
+            :key="set.set_id"
+            class="set-card"
+          >
+            <div class="set-card-image">
+              <img
+                :src="
+                  set.face_photo && set.face_photo.photo_url
+                    ? set.face_photo.photo_url
+                    : defaultSetImage
+                "
+                :alt="set.name"
+              />
+            </div>
+            <div class="set-card-content">
+              <h3>{{ set.name }}</h3>
               <p><strong>Тема:</strong> {{ set.theme }}</p>
               <p><strong>Год:</strong> {{ set.release_year }}</p>
-              <p><strong>Деталей:</strong> {{ set.piece_count }}</p>
+              <div v-if="set.price" class="set-card-price">
+                {{ formatPrice(set.price) }} ₽
+              </div>
+              <router-link
+                :to="`/sets/${set.set_id}`"
+                class="view-details"
+              >
+                Подробнее
+              </router-link>
             </div>
-            <div class="set-card-price" v-if="set.price">
-              {{ formatPrice(set.price) }} ₽
-            </div>
-            <router-link :to="`/sets/${set.set_id}`" class="view-details">
-              Подробнее
-            </router-link>
           </div>
         </div>
       </div>
     </div>
-
-    <div
-      v-if="minifigure && minifigure.photos && minifigure.photos.length > 0"
-      class="minifigure-photos"
-    >
-      <h2>Галерея</h2>
-
-      <div class="photos-grid">
-        <div
-          v-for="photo in minifigure.photos"
-          :key="photo.photo_id"
-          class="photo-item"
-        >
-          <img :src="photo.photo_url" :alt="minifigure.name" />
-        </div>
-      </div>
-    </div>
-
-    <div v-if="error" class="error-message">
-      <p>{{ error }}</p>
+    
+    <div v-else class="no-data">
+      <p>Информация о минифигурке не найдена</p>
+      <router-link to="/" class="back-link">Вернуться на главную</router-link>
     </div>
   </div>
 </template>
 
 <script>
 import { mapGetters, mapActions } from "vuex";
+import PhotoGallery from "@/components/PhotoGallery.vue";
 
 export default {
   name: "MinifigureDetailsView",
+  components: {
+    PhotoGallery
+  },
   data() {
     return {
       minifigure: null,
@@ -119,12 +128,35 @@ export default {
       loading: "isLoading",
       error: "getError",
     }),
+    photoUrls() {
+      if (!this.minifigure) return [];
+      
+      // Если есть фотографии, создаем массив URL из всех фото
+      if (this.minifigure.photos && this.minifigure.photos.length > 0) {
+        return this.minifigure.photos.map(photo => photo.photo_url);
+      }
+      
+      // Если есть только основное фото
+      if (this.minifigure.face_photo && this.minifigure.face_photo.photo_url) {
+        return [this.minifigure.face_photo.photo_url];
+      }
+      
+      // Если фотографий нет, возвращаем дефолтное изображение
+      return [this.defaultFigureImage];
+    }
   },
   methods: {
     ...mapActions(["fetchMinifigureById"]),
     formatPrice(price) {
       return new Intl.NumberFormat("ru-RU").format(price);
     },
+    async retryFetch() {
+      try {
+        await this.fetchMinifigureById(this.$route.params.id);
+      } catch (error) {
+        console.error("Error while retrying to fetch minifigure data:", error);
+      }
+    }
   },
   async mounted() {
     try {
@@ -137,6 +169,55 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.minifigure-details-container {
+  min-height: 300px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.loading-indicator, 
+.error-message,
+.no-data {
+  text-align: center;
+  padding: 3rem;
+  background-color: white;
+  border-radius: var(--lego-border-radius);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin: 1rem 0;
+
+  p {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+}
+
+.loading-indicator p {
+  color: var(--lego-blue);
+  font-weight: bold;
+}
+
+.error-message p {
+  color: var(--lego-red);
+}
+
+.retry-button, 
+.back-link {
+  display: inline-block;
+  background-color: var(--lego-blue);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: var(--lego-border-radius);
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.3s;
+  
+  &:hover {
+    background-color: darken(#006cb7, 10%);
+  }
+}
+
 .minifigure-details {
   animation: fadeIn 0.3s ease-in-out;
 }
@@ -148,7 +229,7 @@ export default {
   margin-bottom: 2rem;
   background-color: white;
   border-radius: var(--lego-border-radius);
-  padding: 1.5rem;
+  padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
   @media (max-width: 768px) {
@@ -156,29 +237,22 @@ export default {
   }
 }
 
-.minifigure-image {
+.minifigure-images {
   flex: 1;
-  min-width: 250px;
-  max-width: 300px;
-
-  img {
-    width: 100%;
-    height: auto;
-    border-radius: var(--lego-border-radius);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  }
+  min-width: 380px;
 }
 
 .minifigure-info {
-  flex: 2;
+  flex: 1;
+  min-width: 380px;
 
   h1 {
     color: var(--lego-blue);
-    font-size: 2rem;
-    margin-bottom: 1.5rem;
+    font-size: 2.5rem;
+    margin-bottom: 1.8rem;
 
     @media (max-width: 768px) {
-      font-size: 1.5rem;
+      font-size: 1.8rem;
     }
   }
 }
@@ -186,8 +260,8 @@ export default {
 .minifigure-meta {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
 
   .minifigure-meta-item {
     display: flex;
@@ -195,17 +269,18 @@ export default {
 
     .label {
       font-weight: bold;
-      font-size: 0.9rem;
+      font-size: 1rem;
       color: var(--lego-dark-gray);
-      margin-bottom: 0.3rem;
+      margin-bottom: 0.5rem;
     }
 
     .value {
-      font-size: 1.1rem;
-      
+      font-size: 1.3rem;
+
       &.price {
         color: var(--lego-red);
         font-weight: bold;
+        font-size: 1.5rem;
       }
     }
   }
@@ -234,8 +309,7 @@ export default {
   }
 }
 
-.minifigure-sets,
-.minifigure-photos {
+.minifigure-sets {
   margin-top: 3rem;
 
   h2 {
@@ -257,7 +331,7 @@ export default {
 
 .sets-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1.5rem;
 }
 
@@ -293,21 +367,16 @@ export default {
       color: var(--lego-black);
     }
 
-    .set-card-details {
+    p {
+      font-size: 0.9rem;
       margin-bottom: 0.8rem;
-
-      p {
-        font-size: 0.9rem;
-        margin-bottom: 0.3rem;
-        color: var(--lego-dark-gray);
-      }
+      color: var(--lego-dark-gray);
     }
-
+    
     .set-card-price {
-      font-weight: bold;
-      font-size: 1.1rem;
+      font-size: 0.9rem;
       color: var(--lego-red);
-      margin-bottom: 0.8rem;
+      font-weight: bold;
     }
 
     .view-details {
@@ -316,6 +385,7 @@ export default {
       font-weight: bold;
       text-decoration: none;
       font-size: 0.9rem;
+      margin-top: 0.5rem;
 
       &:hover {
         text-decoration: underline;
@@ -324,45 +394,8 @@ export default {
   }
 }
 
-.photos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-
-  .photo-item {
-    border-radius: var(--lego-border-radius);
-    overflow: hidden;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s;
-    aspect-ratio: 1;
-
-    &:hover {
-      transform: scale(1.05);
-    }
-
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-  }
-}
-
-.loading,
-.error-message {
-  text-align: center;
-  padding: 2rem;
-  background-color: white;
-  border-radius: var(--lego-border-radius);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-
-  p {
-    font-size: 1.2rem;
-  }
-}
-
-.error-message p {
-  color: var(--lego-red);
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

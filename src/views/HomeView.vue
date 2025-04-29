@@ -215,18 +215,15 @@ export default {
     },
     async fetchMinifigures() {
       try {
-        // Формируем параметры запроса на основе фильтров
+        // Создаем объект параметров запроса
         const params = {};
         
-        // Добавляем лимит по умолчанию
-        params.limit = 10;
-        
-        // Добавляем поисковый запрос, если он есть
+        // Добавляем поисковый запрос, если он указан
         if (this.$route.query.search) {
           params.search = this.$route.query.search;
         }
         
-        // Добавляем теги и логику объединения
+        // Добавляем теги, если они указаны
         if (this.$route.query.tag_names) {
           params.tag_names = this.$route.query.tag_names;
           params.tag_logic = 'AND';
@@ -246,12 +243,17 @@ export default {
         }
         
         // Выполняем запрос к API с параметрами
+        console.log('Запрос минифигурок с параметрами:', params);
         const response = await axios.get(`${this.apiBaseUrl}/minifigures/`, { params });
         console.log("API Response (minifigures):", response.data);
         
         // Проверка структуры данных
         if (Array.isArray(response.data)) {
           this.minifigures = response.data;
+          console.log('Количество загруженных минифигурок:', this.minifigures.length);
+          if (this.minifigures.length > 0) {
+            console.log('Пример первой минифигурки:', this.minifigures[0]);
+          }
         } else {
           console.error("Unexpected API response format for minifigures:", response.data);
           this.minifigures = [];

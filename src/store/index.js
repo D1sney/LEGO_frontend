@@ -100,7 +100,7 @@ export default createStore({
       try {
         commit('SET_LOADING', true);
         
-        const response = await axios.get(`${state.apiBaseUrl}/minifigures/${id}`);
+        const response = await axios.get(`${state.apiBaseUrl}/minifigures/${id}/`);
         commit('SET_CURRENT_MINIFIGURE', response.data);
         
         return response.data;

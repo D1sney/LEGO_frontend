@@ -144,8 +144,7 @@ export default {
       maxPrice: "",
       minPieceCount: "",
       maxPieceCount: "",
-      years: [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018],
-      apiBaseUrl: "/api",
+      years: [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018]
     };
   },
   methods: {
@@ -164,7 +163,7 @@ export default {
     },
     async fetchTags() {
       try {
-        const response = await axios.get(`${this.apiBaseUrl}/tags/`);
+        const response = await axios.get('/tags/');
         console.log("Теги получены:", response.data);
         if (Array.isArray(response.data)) {
           this.availableTags = response.data;

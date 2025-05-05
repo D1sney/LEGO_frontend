@@ -2,7 +2,10 @@
   <div class="user-menu">
     <template v-if="isAuthenticated">
       <div class="user-info">
-        <span class="username">{{ user ? user.username : 'Пользователь' }}</span>
+        <div class="user-details">
+          <span class="username">{{ user ? user.username : 'Пользователь' }}</span>
+          <span v-if="isAdmin" class="admin-badge">Администратор</span>
+        </div>
         <button class="logout-btn" @click="logout" title="Выйти">
           <i class="fas fa-sign-out-alt"></i> Выйти
         </button>
@@ -25,8 +28,17 @@ export default {
   computed: {
     ...mapGetters({
       isAuthenticated: 'isAuthenticated',
-      user: 'getUser'
+      user: 'getUser',
+      isAdmin: 'isAdmin'
     })
+  },
+  mounted() {
+    // Для отладки выводим информацию о пользователе при монтировании компонента
+    if (this.isAuthenticated) {
+      console.log('Пользователь:', this.user);
+      console.log('Роль пользователя:', this.user ? this.user.role : 'неизвестна');
+      console.log('Является администратором:', this.isAdmin);
+    }
   },
   methods: {
     async logout() {
@@ -54,9 +66,24 @@ export default {
   gap: 10px;
 }
 
+.user-details {
+  display: flex;
+  flex-direction: column;
+  margin-right: 10px;
+}
+
 .username {
   font-weight: 500;
-  margin-right: 10px;
+}
+
+.admin-badge {
+  font-size: 0.7rem;
+  background-color: #d01012; /* LEGO красный цвет */
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-top: 2px;
+  display: inline-block;
 }
 
 .logout-btn {

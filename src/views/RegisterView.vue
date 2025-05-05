@@ -79,13 +79,60 @@ export default {
   methods: {
     async register() {
       try {
-        await this.$store.dispatch('register', this.userData);
+        // Очищаем предыдущие ошибки
+        this.$store.commit('SET_ERROR', null);
+        
+        // Базовая валидация
+        if (!this.userData.username || !this.userData.username.trim()) {
+          this.$store.commit('SET_ERROR', 'Имя пользователя не может быть пустым');
+          return;
+        }
+        
+        if (!this.userData.email || !this.validateEmail(this.userData.email)) {
+          this.$store.commit('SET_ERROR', 'Введите корректный email');
+          return;
+        }
+        
+        if (!this.userData.password || this.userData.password.length < 6) {
+          this.$store.commit('SET_ERROR', 'Пароль должен содержать не менее 6 символов');
+          return;
+        }
+        
+        console.log('Отправка формы регистрации. Данные:', {
+          username: this.userData.username,
+          email: this.userData.email,
+          password: '********' // Не логируем реальный пароль
+        });
+        
+        try {
+          // Сначала пробуем отправить через Vuex/axios
+          await this.$store.dispatch('register', this.userData);
+        } catch (axiosError) {
+          // Если получаем ошибку CORS (405), пробуем использовать прямой fetch запрос
+          if (axiosError.response && axiosError.response.status === 405) {
+            console.log('Получена ошибка 405, пробуем использовать прямой fetch запрос');
+            const result = await this.registerWithFetch();
+            if (!result.success) {
+              throw new Error(result.message);
+            }
+          } else {
+            // Если это другая ошибка, пробрасываем её дальше
+            throw axiosError;
+          }
+        }
+        
         this.registrationSuccess = true;
+        console.log('Регистрация успешна, выполняем автоматический вход');
         
         // Автоматически выполняем вход после успешной регистрации
         const formData = new URLSearchParams();
-        formData.append('username', this.userData.username);
+        formData.append('username', this.userData.email);  // Используем email для логина
         formData.append('password', this.userData.password);
+        
+        console.log('Данные для автологина после регистрации:', {
+          username: this.userData.email, // Используется email как username при логине
+          password: '********'
+        });
         
         await this.$store.dispatch('login', formData);
         await this.$store.dispatch('fetchCurrentUser');
@@ -94,7 +141,46 @@ export default {
         this.$router.push('/');
       } catch (error) {
         console.error('Ошибка регистрации:', error);
+        // Обработка ошибки происходит в хранилище
       }
+    },
+    
+    // Альтернативный метод регистрации без использования axios
+    async registerWithFetch() {
+      try {
+        this.$store.commit('SET_LOADING', true);
+        
+        const response = await fetch('http://localhost:8000/users/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(this.userData)
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          const errorMessage = data.detail || 'Ошибка регистрации';
+          this.$store.commit('SET_ERROR', errorMessage);
+          return { success: false, message: errorMessage };
+        }
+        
+        return { success: true, data };
+      } catch (error) {
+        console.error('Ошибка при выполнении fetch запроса:', error);
+        this.$store.commit('SET_ERROR', 'Не удалось подключиться к серверу');
+        return { success: false, message: 'Не удалось подключиться к серверу' };
+      } finally {
+        this.$store.commit('SET_LOADING', false);
+      }
+    },
+    
+    // Простая валидация email
+    validateEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
     }
   },
   // При входе на страницу проверяем авторизацию

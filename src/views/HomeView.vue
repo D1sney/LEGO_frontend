@@ -110,7 +110,6 @@ export default {
       title: "Моя коллекция LEGO",
       defaultSetImage: require("@/assets/images/default-set.png"),
       defaultFigureImage: require("@/assets/images/default-figure.png"),
-      apiBaseUrl: "/api",
       tags: [],
     };
   },
@@ -196,7 +195,7 @@ export default {
         }
         
         // Выполняем запрос к API с параметрами
-        const response = await axios.get(`${this.apiBaseUrl}/sets/`, { params });
+        const response = await axios.get('/sets/', { params });
         console.log("API Response (sets):", response.data);
         
         // Проверка структуры данных
@@ -244,7 +243,7 @@ export default {
         
         // Выполняем запрос к API с параметрами
         console.log('Запрос минифигурок с параметрами:', params);
-        const response = await axios.get(`${this.apiBaseUrl}/minifigures/`, { params });
+        const response = await axios.get('/minifigures/', { params });
         console.log("API Response (minifigures):", response.data);
         
         // Проверка структуры данных
@@ -267,7 +266,7 @@ export default {
     },
     async fetchTags() {
       try {
-        const response = await axios.get(`${this.apiBaseUrl}/tags/`);
+        const response = await axios.get('/tags/');
         if (Array.isArray(response.data)) {
           this.tags = response.data;
         } else {

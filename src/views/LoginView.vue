@@ -9,13 +9,14 @@
       
       <form @submit.prevent="login">
         <div class="form-group">
-          <label for="username">Имя пользователя</label>
+          <label for="username">Email</label>
           <input 
-            type="text" 
+            type="email" 
             id="username" 
             v-model="credentials.username" 
             required
-            autocomplete="username"
+            autocomplete="email"
+            placeholder="Введите ваш email"
           />
         </div>
         
@@ -27,6 +28,7 @@
             v-model="credentials.password" 
             required
             autocomplete="current-password"
+            placeholder="Введите ваш пароль"
           />
         </div>
         
@@ -66,6 +68,16 @@ export default {
   methods: {
     async login() {
       try {
+        this.$store.commit('SET_ERROR', null); // Сбрасываем предыдущие ошибки
+        
+        // Проверяем формат электронной почты
+        if (this.credentials.username && !this.validateEmail(this.credentials.username)) {
+          this.$store.commit('SET_ERROR', 'Пожалуйста, введите корректный email');
+          return;
+        }
+        
+        console.log('Отправка формы входа. Email:', this.credentials.username);
+        
         // Преобразуем данные формы в формат x-www-form-urlencoded для запроса
         const formData = new URLSearchParams();
         formData.append('username', this.credentials.username);
@@ -81,6 +93,12 @@ export default {
       } catch (error) {
         console.error('Ошибка входа:', error);
       }
+    },
+    
+    // Простая валидация email
+    validateEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
     }
   },
   // При входе на страницу проверяем авторизацию

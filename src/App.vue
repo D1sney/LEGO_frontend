@@ -6,11 +6,15 @@
         <h1>Моя коллекция LEGO</h1>
       </div>
 
-      <div class="search-container">
-        <button @click="toggleSearch" class="search-button">
-          <span v-if="!searchOpen">Поиск</span>
-          <span v-else>Закрыть</span>
-        </button>
+      <div class="header-controls">
+        <div class="search-container">
+          <button @click="toggleSearch" class="search-button">
+            <span v-if="!searchOpen">Поиск</span>
+            <span v-else>Закрыть</span>
+          </button>
+        </div>
+        
+        <UserMenu />
       </div>
     </header>
 
@@ -120,11 +124,13 @@
 <script>
 import axios from 'axios';
 import TagFilter from './components/TagFilter.vue';
+import UserMenu from './components/UserMenu.vue';
 
 export default {
   name: "App",
   components: {
-    TagFilter
+    TagFilter,
+    UserMenu
   },
   data() {
     return {
@@ -169,6 +175,14 @@ export default {
       } catch (error) {
         console.error("Ошибка при загрузке тегов:", error);
         this.availableTags = [];
+        
+        // Проверяем, связана ли ошибка с авторизацией
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          // Перенаправляем на страницу входа, если пользователь не авторизован
+          this.$store.commit('LOGOUT');
+          this.$router.push('/login');
+          this.searchOpen = false;
+        }
       }
     },
     applyFilters() {
@@ -492,5 +506,11 @@ body {
   text-align: center;
   padding: 1rem;
   margin-top: auto;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 </style>

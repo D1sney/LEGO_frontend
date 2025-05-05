@@ -113,6 +113,7 @@ export default createStore({
         commit('SET_AUTH_TOKEN', token);
         
         // Устанавливаем токен для всех будущих запросов
+        console.log('Устанавливаем токен авторизации для будущих запросов:', token ? 'токен установлен' : 'токен отсутствует');
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
         return response.data;
@@ -258,17 +259,72 @@ export default createStore({
       try {
         commit('SET_LOADING', true);
         
-        const response = await axios.get(`/sets/?limit=${limit}&offset=${offset}&search=${search}`);
+        // Проверяем наличие токена авторизации
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.warn('Попытка запроса наборов без токена авторизации. Перенаправление на страницу входа.');
+          commit('LOGOUT');
+          router.push('/login');
+          throw new Error('Необходима авторизация. Пожалуйста, войдите в систему.');
+        }
+        
+        // Формирование URL с параметрами запроса и без завершающего слеша
+        const url = `/sets?limit=${limit}&offset=${offset}&search=${search}`;
+        console.log(`Запрос списка наборов по URL: ${url}`);
+        
+        // Явно указываем заголовок Authorization
+        const response = await axios.get(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        });
+        
+        console.log(`Успешно получен список наборов. Количество: ${response.data.length || 0}`);
         commit('SET_SETS', response.data);
         
         return response.data;
       } catch (error) {
+        console.error('Ошибка при загрузке наборов:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          message: error.message,
+          url: error.config?.url
+        });
+        
+        // Если получили ошибку 405, пробуем с завершающим слешем
+        if (error.response && error.response.status === 405) {
+          console.error('Ошибка 405 Method Not Allowed. Пробуем альтернативный URL со слешем...');
+          
+          try {
+            const altUrl = `/sets/?limit=${limit}&offset=${offset}&search=${search}`;
+            console.log(`Пробуем альтернативный URL: ${altUrl}`);
+            
+            const retryResponse = await axios.get(altUrl, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+              }
+            });
+            
+            console.log(`Успешно получен список наборов через альтернативный URL. Количество: ${retryResponse.data.length || 0}`);
+            commit('SET_SETS', retryResponse.data);
+            return retryResponse.data;
+          } catch (retryError) {
+            console.error('Ошибка при использовании альтернативного URL:', {
+              status: retryError.response?.status,
+              statusText: retryError.response?.statusText
+            });
+          }
+        }
+        
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
           commit('LOGOUT');
           router.push('/login');
         }
-        commit('SET_ERROR', error.message || 'Ошибка при загрузке наборов');
-        console.error('Error fetching sets:', error);
+        
+        commit('SET_ERROR', error.response?.data?.detail || error.message || 'Ошибка при загрузке наборов');
         throw error;
       } finally {
         commit('SET_LOADING', false);
@@ -279,17 +335,38 @@ export default createStore({
       try {
         commit('SET_LOADING', true);
         
-        const response = await axios.get(`/minifigures/?limit=${limit}&offset=${offset}&search=${search}`);
+        // Проверяем наличие токена авторизации
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.warn('Попытка запроса минифигурок без токена авторизации. Перенаправление на страницу входа.');
+          commit('LOGOUT');
+          router.push('/login');
+          throw new Error('Необходима авторизация. Пожалуйста, войдите в систему.');
+        }
+        
+        // Явно указываем заголовок Authorization
+        const response = await axios.get(`/minifigures/?limit=${limit}&offset=${offset}&search=${search}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
         commit('SET_MINIFIGURES', response.data);
         
         return response.data;
       } catch (error) {
+        console.error('Ошибка при загрузке минифигурок:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+        
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
           commit('LOGOUT');
           router.push('/login');
         }
-        commit('SET_ERROR', error.message || 'Ошибка при загрузке минифигурок');
-        console.error('Error fetching minifigures:', error);
+        
+        commit('SET_ERROR', error.response?.data?.detail || error.message || 'Ошибка при загрузке минифигурок');
         throw error;
       } finally {
         commit('SET_LOADING', false);
@@ -300,17 +377,106 @@ export default createStore({
       try {
         commit('SET_LOADING', true);
         
-        const response = await axios.get(`/sets/${id}/`);
+        // Проверяем наличие токена авторизации
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.warn('Попытка запроса набора без токена авторизации. Перенаправление на страницу входа.');
+          commit('LOGOUT');
+          router.push('/login');
+          throw new Error('Необходима авторизация. Пожалуйста, войдите в систему.');
+        }
+        
+        // Изменение формата URL согласно документации API
+        const url = `/sets/${id}`;  // Убираем завершающий слеш
+        console.log(`Запрос набора с ID: ${id} по URL: ${url}, токен авторизации: ${token ? 'присутствует' : 'отсутствует'}`);
+        
+        // Проверяем, установлен ли заголовок Authorization
+        const authHeader = axios.defaults.headers.common['Authorization'];
+        if (!authHeader) {
+          console.log('Заголовок Authorization не установлен. Устанавливаем...');
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        }
+        
+        // Отправляем запрос с явным указанием заголовка авторизации
+        // Теперь используем точный URL без слешей на конце
+        const response = await axios.get(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        });
+        
         commit('SET_CURRENT_SET', response.data);
+        console.log(`Успешно получены данные набора #${id}:`, response.data);
         
         return response.data;
       } catch (error) {
+        console.error(`Ошибка при загрузке набора #${id}:`, {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          message: error.message,
+          config: error.config ? {
+            url: error.config.url,
+            method: error.config.method,
+            headers: error.config.headers,
+            baseURL: error.config.baseURL
+          } : 'Конфигурация недоступна'
+        });
+        
+        // Если получили ошибку 405, пробуем другие варианты URL
+        if (error.response && error.response.status === 405) {
+          console.error('Ошибка 405 Method Not Allowed. Пробуем альтернативные форматы URL...');
+          
+          // Массив возможных форматов URL для тестирования
+          const urlFormats = [
+            `/sets/${id}/`, // с завершающим слешем
+            `/sets/${id}`,  // без завершающего слеша
+            `/sets/${id}?`, // с параметром запроса
+            `/sets/${id}?format=json` // с параметром формата
+          ];
+          
+          // Пробуем поочередно все форматы URL
+          let success = false;
+          for (const testUrl of urlFormats) {
+            // Пропускаем текущий URL, если он уже был проверен
+            if (testUrl === url) continue;
+            
+            try {
+              console.log(`Пробуем альтернативный URL: ${testUrl}`);
+              const retryResponse = await axios.get(testUrl, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Accept': 'application/json'
+                }
+              });
+              
+              if (retryResponse.status === 200) {
+                commit('SET_CURRENT_SET', retryResponse.data);
+                console.log(`Успешно получены данные через альтернативный URL: ${testUrl}`);
+                success = true;
+                return retryResponse.data;
+              }
+            } catch (retryError) {
+              console.error(`Ошибка при использовании URL ${testUrl}:`, {
+                status: retryError.response?.status,
+                statusText: retryError.response?.statusText
+              });
+            }
+          }
+          
+          if (!success) {
+            console.error('Все попытки альтернативных URL завершились неудачей');
+          }
+        }
+        
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          console.warn('Ошибка авторизации при запросе набора. Перенаправление на страницу входа.');
           commit('LOGOUT');
           router.push('/login');
         }
-        commit('SET_ERROR', error.message || `Ошибка при загрузке набора #${id}`);
-        console.error(`Error fetching set #${id}:`, error);
+        
+        commit('SET_ERROR', error.response?.data?.detail || error.message || `Ошибка при загрузке набора #${id}`);
         throw error;
       } finally {
         commit('SET_LOADING', false);
@@ -321,17 +487,68 @@ export default createStore({
       try {
         commit('SET_LOADING', true);
         
-        const response = await axios.get(`/minifigures/${id}/`);
+        // Проверяем наличие токена авторизации
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.warn('Попытка запроса минифигурки без токена авторизации. Перенаправление на страницу входа.');
+          commit('LOGOUT');
+          router.push('/login');
+          throw new Error('Необходима авторизация. Пожалуйста, войдите в систему.');
+        }
+        
+        // Записываем URL и логируем для сравнения с запросом набора
+        const url = `/minifigures/${id}/`;
+        console.log(`Запрос минифигурки с ID: ${id} по URL: ${url}, токен авторизации: ${token ? 'присутствует' : 'отсутствует'}`);
+        
+        // Проверяем, установлен ли заголовок Authorization
+        const authHeader = axios.defaults.headers.common['Authorization'];
+        if (!authHeader) {
+          console.log('Заголовок Authorization не установлен. Устанавливаем...');
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        }
+        
+        // Отправляем запрос с явным указанием заголовка авторизации
+        const response = await axios.get(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        });
+        
+        console.log(`Успешно получена минифигурка #${id}. URL, который сработал: ${url}`);
+        console.log('Заголовки запроса минифигурки:', {
+          Authorization: `Bearer ${token.substring(0, 10)}...`,
+          Accept: 'application/json'
+        });
+        
         commit('SET_CURRENT_MINIFIGURE', response.data);
         
         return response.data;
       } catch (error) {
-        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-          commit('LOGOUT');
-          router.push('/login');
+        console.error(`Ошибка при загрузке минифигурки #${id}:`, {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          message: error.message,
+          config: error.config ? {
+            url: error.config.url,
+            method: error.config.method,
+            headers: error.config.headers,
+            baseURL: error.config.baseURL
+          } : 'Конфигурация недоступна'
+        });
+        
+        if (error.response) {
+          if (error.response.status === 401 || error.response.status === 403) {
+            console.warn('Ошибка авторизации при запросе минифигурки. Перенаправление на страницу входа.');
+            commit('LOGOUT');
+            router.push('/login');
+          } else if (error.response.status === 405) {
+            console.error('Ошибка 405 Method Not Allowed при запросе минифигурки. Возможно проблема с CORS или авторизацией.');
+          }
         }
-        commit('SET_ERROR', error.message || `Ошибка при загрузке минифигурки #${id}`);
-        console.error(`Error fetching minifigure #${id}:`, error);
+        
+        commit('SET_ERROR', error.response?.data?.detail || error.message || `Ошибка при загрузке минифигурки #${id}`);
         throw error;
       } finally {
         commit('SET_LOADING', false);
@@ -342,17 +559,38 @@ export default createStore({
       try {
         commit('SET_LOADING', true);
         
-        const response = await axios.get('/tags/');
+        // Проверяем наличие токена авторизации
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.warn('Попытка запроса тегов без токена авторизации. Перенаправление на страницу входа.');
+          commit('LOGOUT');
+          router.push('/login');
+          throw new Error('Необходима авторизация. Пожалуйста, войдите в систему.');
+        }
+        
+        // Явно указываем заголовок Authorization
+        const response = await axios.get('/tags/', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
         commit('SET_TAGS', response.data);
         
         return response.data;
       } catch (error) {
+        console.error('Ошибка при загрузке тегов:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+        
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
           commit('LOGOUT');
           router.push('/login');
         }
-        commit('SET_ERROR', error.message || 'Ошибка при загрузке тегов');
-        console.error('Error fetching tags:', error);
+        
+        commit('SET_ERROR', error.response?.data?.detail || error.message || 'Ошибка при загрузке тегов');
         throw error;
       } finally {
         commit('SET_LOADING', false);

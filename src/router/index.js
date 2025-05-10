@@ -33,6 +33,24 @@ const routes = [
     name: 'register',
     component: () => import(/* webpackChunkName: "register" */ '../views/RegisterView.vue')
   },
+  {
+    path: '/tournaments',
+    name: 'tournaments',
+    component: () => import(/* webpackChunkName: "tournaments" */ '../views/TournamentsView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tournaments/create',
+    name: 'tournament-create',
+    component: () => import(/* webpackChunkName: "tournament-create" */ '../views/TournamentCreateView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tournaments/:id',
+    name: 'tournament-details',
+    component: () => import(/* webpackChunkName: "tournament-details" */ '../views/TournamentDetailsView.vue'),
+    meta: { requiresAuth: true }
+  },
   // Маршрут для перенаправления, если страница не найдена
   {
     path: '/:pathMatch(.*)*',

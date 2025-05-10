@@ -7,6 +7,11 @@
       </div>
 
       <div class="header-controls">
+        <nav class="main-nav">
+          <router-link to="/" class="nav-link">Коллекция</router-link>
+          <router-link to="/tournaments" class="nav-link">Турниры</router-link>
+        </nav>
+        
         <div class="search-container">
           <button @click="toggleSearch" class="search-button">
             <span v-if="!searchOpen">Поиск</span>
@@ -510,6 +515,29 @@ body {
 .header-controls {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 1rem;
+  
+  .main-nav {
+    display: flex;
+    gap: 1rem;
+    
+    .nav-link {
+      color: var(--lego-black);
+      text-decoration: none;
+      font-weight: bold;
+      transition: color 0.2s;
+      padding: 0.3rem 0.7rem;
+      border-radius: var(--lego-border-radius);
+      
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+      }
+      
+      &.router-link-active {
+        background-color: var(--lego-yellow);
+        color: var(--lego-black);
+      }
+    }
+  }
 }
 </style>

@@ -15,7 +15,9 @@ export default createStore({
       token: localStorage.getItem('auth_token') || null,
       user: JSON.parse(localStorage.getItem('auth_user') || 'null'),
       isAuthenticated: !!localStorage.getItem('auth_token')
-    }
+    },
+    tournaments: [],
+    currentTournament: null
   },
   getters: {
     getSets: state => state.sets,
@@ -28,7 +30,9 @@ export default createStore({
     isAuthenticated: state => state.auth.isAuthenticated,
     getToken: state => state.auth.token,
     getUser: state => state.auth.user,
-    isAdmin: state => state.auth.user && state.auth.user.role === 'admin'
+    isAdmin: state => state.auth.user && state.auth.user.role === 'admin',
+    getTournaments: state => state.tournaments,
+    getCurrentTournament: state => state.currentTournament
   },
   mutations: {
     SET_LOADING(state, status) {
@@ -79,6 +83,12 @@ export default createStore({
       state.auth.isAuthenticated = false;
       localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_user');
+    },
+    SET_TOURNAMENTS(state, tournaments) {
+      state.tournaments = tournaments;
+    },
+    SET_CURRENT_TOURNAMENT(state, tournament) {
+      state.currentTournament = tournament;
     }
   },
   actions: {
@@ -591,6 +601,206 @@ export default createStore({
         }
         
         commit('SET_ERROR', error.response?.data?.detail || error.message || 'Ошибка при загрузке тегов');
+        throw error;
+      } finally {
+        commit('SET_LOADING', false);
+      }
+    },
+    
+    async fetchTournaments({ commit }) {
+      try {
+        commit('SET_LOADING', true);
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.warn('Попытка запроса турниров без токена авторизации.');
+          commit('LOGOUT');
+          router.push('/login');
+          throw new Error('Необходима авторизация.');
+        }
+        
+        const response = await axios.get('/tournaments/', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        });
+        
+        commit('SET_TOURNAMENTS', response.data);
+        console.log('Успешно получены данные о турнирах:', response.data);
+        
+        return response.data;
+      } catch (error) {
+        console.error('Ошибка при загрузке турниров:', error);
+        commit('SET_ERROR', error.response?.data?.detail || error.message || 'Ошибка при загрузке турниров');
+        throw error;
+      } finally {
+        commit('SET_LOADING', false);
+      }
+    },
+    
+    async fetchTournamentById({ commit }, tournamentId) {
+      try {
+        commit('SET_LOADING', true);
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.warn('Попытка запроса турнира без токена авторизации.');
+          commit('LOGOUT');
+          router.push('/login');
+          throw new Error('Необходима авторизация.');
+        }
+        
+        const response = await axios.get(`/tournaments/${tournamentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        });
+        
+        commit('SET_CURRENT_TOURNAMENT', response.data);
+        console.log(`Успешно получены данные турнира #${tournamentId}:`, response.data);
+        
+        return response.data;
+      } catch (error) {
+        console.error(`Ошибка при загрузке турнира #${tournamentId}:`, error);
+        commit('SET_ERROR', error.response?.data?.detail || error.message || `Ошибка при загрузке турнира #${tournamentId}`);
+        throw error;
+      } finally {
+        commit('SET_LOADING', false);
+      }
+    },
+    
+    async createTournament({ commit }, tournamentData) {
+      try {
+        commit('SET_LOADING', true);
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.warn('Попытка создания турнира без токена авторизации.');
+          commit('LOGOUT');
+          router.push('/login');
+          throw new Error('Необходима авторизация.');
+        }
+        
+        const response = await axios.post('/tournaments/', tournamentData, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('Турнир успешно создан:', response.data);
+        
+        return response.data;
+      } catch (error) {
+        console.error('Ошибка при создании турнира:', error);
+        commit('SET_ERROR', error.response?.data?.detail || error.message || 'Ошибка при создании турнира');
+        throw error;
+      } finally {
+        commit('SET_LOADING', false);
+      }
+    },
+    
+    async voteForParticipant({ commit }, { tournamentId, pairId, votedFor }) {
+      try {
+        commit('SET_LOADING', true);
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.warn('Попытка голосования без токена авторизации.');
+          commit('LOGOUT');
+          router.push('/login');
+          throw new Error('Необходима авторизация.');
+        }
+        
+        const response = await axios.post(`/tournaments/${tournamentId}/vote`, {
+          pair_id: pairId,
+          voted_for: votedFor
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('Голос успешно отправлен:', response.data);
+        
+        // Обновляем данные о турнире после голосования
+        await this.dispatch('fetchTournamentById', tournamentId);
+        
+        return response.data;
+      } catch (error) {
+        console.error('Ошибка при голосовании:', error);
+        commit('SET_ERROR', error.response?.data?.detail || error.message || 'Ошибка при голосовании');
+        throw error;
+      } finally {
+        commit('SET_LOADING', false);
+      }
+    },
+    
+    async advanceToNextStage({ commit }, { tournamentId, durationHours }) {
+      try {
+        commit('SET_LOADING', true);
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.warn('Попытка перехода к следующей стадии без токена авторизации.');
+          commit('LOGOUT');
+          router.push('/login');
+          throw new Error('Необходима авторизация.');
+        }
+        
+        const url = `/tournaments/${tournamentId}/advance`;
+        const params = durationHours ? { duration_hours: durationHours } : {};
+        
+        const response = await axios.post(url, {}, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          },
+          params
+        });
+        
+        console.log('Турнир успешно переведен на следующую стадию:', response.data);
+        
+        // Обновляем данные о турнире после перехода на новую стадию
+        await this.dispatch('fetchTournamentById', tournamentId);
+        
+        return response.data;
+      } catch (error) {
+        console.error('Ошибка при переходе на следующую стадию турнира:', error);
+        commit('SET_ERROR', error.response?.data?.detail || error.message || 'Ошибка при переходе на следующую стадию турнира');
+        throw error;
+      } finally {
+        commit('SET_LOADING', false);
+      }
+    },
+    
+    async deleteTournament({ commit }, tournamentId) {
+      try {
+        commit('SET_LOADING', true);
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.warn('Попытка удаления турнира без токена авторизации.');
+          commit('LOGOUT');
+          router.push('/login');
+          throw new Error('Необходима авторизация.');
+        }
+        
+        const response = await axios.delete(`/tournaments/${tournamentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        });
+        
+        console.log('Турнир успешно удален:', response.data);
+        
+        // Обновляем список турниров после удаления
+        await this.dispatch('fetchTournaments');
+        
+        return response.data;
+      } catch (error) {
+        console.error('Ошибка при удалении турнира:', error);
+        commit('SET_ERROR', error.response?.data?.detail || error.message || 'Ошибка при удалении турнира');
         throw error;
       } finally {
         commit('SET_LOADING', false);

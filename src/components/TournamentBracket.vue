@@ -30,7 +30,6 @@
               @click="openParticipantDetails(pair.participant1)"
             >
               <img 
-                v-if="pair.participant1.set?.face_photo?.photo_url || pair.participant1.minifigure?.face_photo?.photo_url" 
                 :src="getParticipantImage(pair.participant1)" 
                 :alt="getParticipantName(pair.participant1)"
                 class="participant-image"
@@ -55,7 +54,6 @@
               @click="openParticipantDetails(pair.participant2)"
             >
               <img 
-                v-if="pair.participant2.set?.face_photo?.photo_url || pair.participant2.minifigure?.face_photo?.photo_url" 
                 :src="getParticipantImage(pair.participant2)" 
                 :alt="getParticipantName(pair.participant2)"
                 class="participant-image"
@@ -231,10 +229,16 @@ export default {
     getParticipantImage(participant) {
       if (!participant) return '';
       
-      if (participant.set && participant.set.face_photo) {
-        return participant.set.face_photo.photo_url;
-      } else if (participant.minifigure && participant.minifigure.face_photo) {
-        return participant.minifigure.face_photo.photo_url;
+      if (participant.set) {
+        if (participant.set.face_photo && participant.set.face_photo.photo_url) {
+          return participant.set.face_photo.photo_url;
+        }
+        return require('@/assets/images/default-set.png');
+      } else if (participant.minifigure) {
+        if (participant.minifigure.face_photo && participant.minifigure.face_photo.photo_url) {
+          return participant.minifigure.face_photo.photo_url;
+        }
+        return require('@/assets/images/default-figure.png');
       }
       
       return require('@/assets/images/default-set.png');

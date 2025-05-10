@@ -2,7 +2,7 @@
   <div class="tournaments-container">
     <div class="tournaments-header">
       <h1>Турниры LEGO</h1>
-      <button @click="showCreateForm = true" class="create-tournament-btn">
+      <button v-if="isAdmin" @click="showCreateForm = true" class="create-tournament-btn">
         Создать турнир
       </button>
     </div>
@@ -18,7 +18,7 @@
     
     <div v-else-if="tournaments.length === 0" class="empty-state">
       <p>Нет доступных турниров</p>
-      <button @click="showCreateForm = true" class="create-tournament-btn">
+      <button v-if="isAdmin" @click="showCreateForm = true" class="create-tournament-btn">
         Создать первый турнир
       </button>
     </div>
@@ -62,7 +62,8 @@ export default {
     ...mapGetters({
       tournaments: 'getTournaments',
       loading: 'isLoading',
-      error: 'getError'
+      error: 'getError',
+      isAdmin: 'isAdmin'
     })
   },
   methods: {

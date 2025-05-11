@@ -64,6 +64,15 @@
                   <span class="vote-count">{{ pair.votes_for_participant1 || 0 }} голосов</span>
                 </div>
               </div>
+              
+              <button 
+                v-if="canVoteForPair(pair)"
+                @click.stop="vote(pair, pair.participant1_id)" 
+                class="vote-button"
+                :class="{ 'voted-for': hasVotedFor(pair, pair.participant1_id) }"
+              >
+                Голосовать
+              </button>
             </div>
             
             <div class="pair-vs">VS</div>
@@ -88,28 +97,19 @@
                   <span class="vote-count">{{ pair.votes_for_participant2 || 0 }} голосов</span>
                 </div>
               </div>
-            </div>
-            
-            <div v-else class="pair-participant empty">
-              <span class="participant-name">TBD</span>
-            </div>
-            
-            <div class="pair-actions" v-if="canVoteForPair(pair)">
+              
               <button 
-                @click.stop="vote(pair, pair.participant1_id)" 
-                class="vote-button"
-                :class="{ 'voted-for': hasVotedFor(pair, pair.participant1_id) }"
-              >
-                Голосовать
-              </button>
-              <button 
-                v-if="pair.participant2"
+                v-if="canVoteForPair(pair)"
                 @click.stop="vote(pair, pair.participant2_id)" 
                 class="vote-button"
                 :class="{ 'voted-for': hasVotedFor(pair, pair.participant2_id) }"
               >
                 Голосовать
               </button>
+            </div>
+            
+            <div v-else class="pair-participant empty">
+              <span class="participant-name">TBD</span>
             </div>
           </div>
         </div>
@@ -611,6 +611,7 @@ export default {
     cursor: pointer;
     transition: background-color 0.2s;
     align-items: center;
+    justify-content: space-between;
     
     &:hover {
       background-color: rgba(0, 0, 0, 0.05);
@@ -668,26 +669,9 @@ export default {
         }
       }
     }
-  }
-  
-  .pair-vs {
-    text-align: center;
-    font-weight: bold;
-    font-size: 0.9rem;
-    color: var(--lego-dark-grey);
-    margin: 0.3rem 0;
-    text-transform: uppercase;
-  }
-  
-  .pair-actions {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 0.5rem;
-    gap: 0.5rem;
     
     .vote-button {
-      flex: 1;
-      padding: 0.3rem;
+      padding: 0.3rem 0.8rem;
       border-radius: var(--lego-border-radius);
       background-color: var(--lego-blue);
       color: white;
@@ -695,6 +679,8 @@ export default {
       cursor: pointer;
       font-size: 0.8rem;
       transition: background-color 0.2s;
+      margin-left: 0.5rem;
+      white-space: nowrap;
       
       &:hover {
         background-color: darken(#2196F3, 10%);
@@ -708,6 +694,15 @@ export default {
         }
       }
     }
+  }
+  
+  .pair-vs {
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: var(--lego-dark-grey);
+    margin: 0.3rem 0;
+    text-transform: uppercase;
   }
 }
 

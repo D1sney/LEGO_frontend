@@ -2,12 +2,36 @@
   <div class="tournament-bracket-container">
     <h2 class="bracket-title">{{ title }}</h2>
     
-    <div class="tournament-bracket" ref="bracketContainer">
+    <!-- Навигация по стадиям турнира -->
+    <div class="tournament-stages-nav">
+      <div class="stages-scroll-container" ref="stagesScrollContainer">
+        <button 
+          v-for="(stage, stageIndex) in stages" 
+          :key="stageIndex"
+          class="stage-nav-button"
+          :class="{ 
+            'active-stage': isActiveStage(stage.name),
+            'selected-stage': selectedStage === stage.name 
+          }"
+          @click="selectStage(stage.name)"
+        >
+          {{ formatStageName(stage.name) }}
+        </button>
+      </div>
+    </div>
+    
+    <!-- Показываем только одну выбранную стадию в центре экрана -->
+    <div class="tournament-bracket-wrapper">
       <div 
         v-for="(stage, stageIndex) in stages" 
         :key="stageIndex" 
         class="bracket-stage"
-        :class="{ 'active-stage': isActiveStage(stage.name) }"
+        :class="{ 
+          'active-stage': isActiveStage(stage.name),
+          'visible-stage': selectedStage === stage.name,
+          'hidden-stage': selectedStage !== stage.name
+        }"
+        :id="`stage-${stage.name}`"
       >
         <h3 class="stage-name">{{ formatStageName(stage.name) }}</h3>
         
@@ -126,7 +150,8 @@ export default {
         'quarterfinal',
         'semifinal',
         'final'
-      ]
+      ],
+      selectedStage: null // Текущая выбранная стадия для отображения
     };
   },
   computed: {
@@ -167,7 +192,12 @@ export default {
     this.updateUserVotes();
   },
   mounted() {
-    // При необходимости можно добавить масштабирование или иные эффекты для отображения
+    // Устанавливаем текущую активную стадию по умолчанию
+    this.selectedStage = this.tournament.current_stage;
+    // Прокручиваем к выбранной стадии после рендеринга
+    this.$nextTick(() => {
+      this.scrollToStage(this.selectedStage);
+    });
   },
   methods: {
     updateUserVotes() {
@@ -330,6 +360,49 @@ export default {
       } else if (participant.minifigure) {
         this.$router.push(`/minifigures/${participant.minifigure.minifigure_id}`);
       }
+    },
+    
+    selectStage(stageName) {
+      this.selectedStage = stageName;
+      
+      // Только прокручиваем навигационные кнопки, чтобы выбранная была видна
+      this.$nextTick(() => {
+        const buttons = this.$refs.stagesScrollContainer.querySelectorAll('.stage-nav-button');
+        const selectedButton = Array.from(buttons).find(button => 
+          button.textContent.trim() === this.formatStageName(stageName).trim()
+        );
+        
+        if (selectedButton) {
+          // Рассчитываем позицию для центрирования кнопки
+          const containerWidth = this.$refs.stagesScrollContainer.offsetWidth;
+          const buttonLeft = selectedButton.offsetLeft;
+          const buttonWidth = selectedButton.offsetWidth;
+          const scrollLeft = buttonLeft - (containerWidth / 2) + (buttonWidth / 2);
+          
+          // Плавно прокручиваем к кнопке
+          this.$refs.stagesScrollContainer.scrollTo({
+            left: Math.max(0, scrollLeft),
+            behavior: 'smooth'
+          });
+        }
+      });
+    },
+    
+    scrollToStage(stageName) {
+      const stageElement = document.getElementById(`stage-${stageName}`);
+      if (stageElement) {
+        // Рассчитываем позицию для центрирования стадии в области просмотра
+        const containerWidth = this.$refs.bracketContainer.offsetWidth;
+        const stageLeft = stageElement.offsetLeft;
+        const stageWidth = stageElement.offsetWidth;
+        const scrollLeft = stageLeft - (containerWidth / 2) + (stageWidth / 2);
+        
+        // Плавно прокручиваем к стадии
+        this.$refs.bracketContainer.scrollTo({
+          left: Math.max(0, scrollLeft),
+          behavior: 'smooth'
+        });
+      }
     }
   }
 };
@@ -338,45 +411,116 @@ export default {
 <style lang="scss" scoped>
 .tournament-bracket-container {
   width: 100%;
-  overflow-x: auto;
+  overflow-x: hidden;
   padding: 1rem 0;
   
   .bracket-title {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     text-align: center;
     color: var(--lego-black);
   }
 }
 
-.tournament-bracket {
+// Добавляем стили для навигации по стадиям турнира
+.tournament-stages-nav {
+  width: 100%;
+  margin-bottom: 1.5rem;
+  
+  .stages-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--lego-yellow) var(--lego-light-grey);
+    
+    &::-webkit-scrollbar {
+      height: 8px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: var(--lego-light-grey);
+      border-radius: 4px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--lego-yellow);
+      border-radius: 4px;
+      border: 2px solid var(--lego-yellow);
+    }
+  }
+  
+  .stage-nav-button {
+    flex: 0 0 auto;
+    padding: 0.5rem 1rem;
+    margin-right: 0.5rem;
+    border-radius: var(--lego-border-radius);
+    background-color: var(--lego-light-grey);
+    color: var(--lego-dark-grey);
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-weight: bold;
+    white-space: nowrap;
+    transition: all 0.2s;
+    
+    &:hover {
+      background-color: var(--lego-grey);
+    }
+    
+    &.active-stage {
+      background-color: rgba(255, 193, 7, 0.7); // Немного приглушенный желтый для активной стадии
+      color: var(--lego-black);
+    }
+    
+    &.selected-stage {
+      background-color: var(--lego-yellow);
+      color: var(--lego-black);
+      border-color: var(--lego-dark-yellow);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+  }
+}
+
+// Новый контейнер для стадий турнира
+.tournament-bracket-wrapper {
   display: flex;
-  justify-content: flex-start;
-  gap: 2rem;
-  min-width: max-content;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
   padding: 0 1rem;
   
   .bracket-stage {
     flex: 1;
-    min-width: 250px;
+    max-width: 95%;
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    opacity: 0.7;
-    transition: opacity 0.3s;
+    transition: all 0.3s ease;
+    margin: 0 auto;
+    
+    &.hidden-stage {
+      display: none;
+    }
+    
+    &.visible-stage {
+      display: flex;
+      opacity: 1;
+      transform: scale(1);
+    }
     
     &.active-stage {
-      opacity: 1;
+      // Активная стадия турнира
     }
     
     .stage-name {
       margin-bottom: 1rem;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       text-align: center;
-      padding: 0.5rem 1rem;
+      padding: 0.5rem 1.5rem;
       border-radius: var(--lego-border-radius);
       background-color: var(--lego-yellow);
       color: var(--lego-black);
-      width: 100%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     
     .stage-pairs {
@@ -384,6 +528,7 @@ export default {
       flex-direction: column;
       gap: 2rem;
       width: 100%;
+      max-width: 500px;
     }
   }
 }

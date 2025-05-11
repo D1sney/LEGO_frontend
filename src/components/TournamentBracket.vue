@@ -391,15 +391,12 @@ export default {
     scrollToStage(stageName) {
       const stageElement = document.getElementById(`stage-${stageName}`);
       if (stageElement) {
-        // Рассчитываем позицию для центрирования стадии в области просмотра
-        const containerWidth = this.$refs.bracketContainer.offsetWidth;
-        const stageLeft = stageElement.offsetLeft;
-        const stageWidth = stageElement.offsetWidth;
-        const scrollLeft = stageLeft - (containerWidth / 2) + (stageWidth / 2);
+        // Просто переключаем видимую стадию
+        this.selectedStage = stageName;
         
-        // Плавно прокручиваем к стадии
-        this.$refs.bracketContainer.scrollTo({
-          left: Math.max(0, scrollLeft),
+        // Прокручиваем к верху контейнера
+        window.scrollTo({
+          top: stageElement.offsetTop - 100, // Отступ сверху
           behavior: 'smooth'
         });
       }
@@ -413,6 +410,29 @@ export default {
   width: 100%;
   overflow-x: hidden;
   padding: 1rem 0;
+  
+  /* Стилизация скроллбара для всего контейнера */
+  scrollbar-width: thin;
+  scrollbar-color: var(--lego-yellow) var(--lego-light-grey);
+  
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background-color: var(--lego-light-grey);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--lego-yellow);
+    border-radius: 4px;
+    border: 2px solid var(--lego-yellow);
+    
+    &:hover {
+      background-color: var(--lego-dark-yellow, #e0a800);
+    }
+  }
   
   .bracket-title {
     margin-bottom: 1rem;
@@ -430,6 +450,11 @@ export default {
     display: flex;
     overflow-x: auto;
     padding: 0.5rem 0;
+    margin: 0 auto;
+    justify-content: center;
+    flex-wrap: wrap;
+    
+    /* Стилизуем нативный скроллбар для лучшей интеграции в дизайн */
     scrollbar-width: thin;
     scrollbar-color: var(--lego-yellow) var(--lego-light-grey);
     
@@ -438,7 +463,7 @@ export default {
     }
     
     &::-webkit-scrollbar-track {
-      background: var(--lego-light-grey);
+      background-color: var(--lego-light-grey);
       border-radius: 4px;
     }
     
@@ -452,7 +477,7 @@ export default {
   .stage-nav-button {
     flex: 0 0 auto;
     padding: 0.5rem 1rem;
-    margin-right: 0.5rem;
+    margin: 0.25rem;
     border-radius: var(--lego-border-radius);
     background-color: var(--lego-light-grey);
     color: var(--lego-dark-grey);
@@ -487,6 +512,29 @@ export default {
   align-items: flex-start;
   width: 100%;
   padding: 0 1rem;
+  
+  /* Стилизация скроллбара для контейнера стадий */
+  scrollbar-width: thin;
+  scrollbar-color: var(--lego-yellow) var(--lego-light-grey);
+  
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background-color: var(--lego-light-grey);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--lego-yellow);
+    border-radius: 4px;
+    border: 2px solid var(--lego-yellow);
+    
+    &:hover {
+      background-color: var(--lego-dark-yellow, #e0a800);
+    }
+  }
   
   .bracket-stage {
     flex: 1;

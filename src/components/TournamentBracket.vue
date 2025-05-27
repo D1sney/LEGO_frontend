@@ -4,7 +4,27 @@
     
     <!-- Навигация по стадиям турнира -->
     <div class="tournament-stages-nav">
-      <div class="stages-scroll-container" ref="stagesScrollContainer">
+      <div class="nav-header">
+        <h3>Стадии турнира</h3>
+        <div class="nav-controls">
+          <button 
+            class="nav-scroll-btn nav-scroll-left" 
+            @click="scrollStagesLeft"
+            :disabled="!canScrollLeft"
+          >
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button 
+            class="nav-scroll-btn nav-scroll-right" 
+            @click="scrollStagesRight"
+            :disabled="!canScrollRight"
+          >
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="stages-scroll-container" ref="stagesScrollContainer" @scroll="updateScrollButtons">
         <button 
           v-for="(stage, stageIndex) in stages" 
           :key="stageIndex"
@@ -15,7 +35,10 @@
           }"
           @click="selectStage(stage.name)"
         >
-          {{ formatStageName(stage.name) }}
+          <div class="stage-button-content">
+            <span class="stage-name">{{ formatStageName(stage.name) }}</span>
+            <span v-if="isActiveStage(stage.name)" class="stage-status">Текущая</span>
+          </div>
         </button>
       </div>
     </div>
@@ -151,7 +174,9 @@ export default {
         'semifinal',
         'final'
       ],
-      selectedStage: null // Текущая выбранная стадия для отображения
+      selectedStage: null, // Текущая выбранная стадия для отображения
+      canScrollLeft: false,
+      canScrollRight: false
     };
   },
   computed: {
@@ -197,6 +222,7 @@ export default {
     // Прокручиваем к выбранной стадии после рендеринга
     this.$nextTick(() => {
       this.scrollToStage(this.selectedStage);
+      this.updateScrollButtons();
     });
   },
   methods: {
@@ -400,6 +426,34 @@ export default {
           behavior: 'smooth'
         });
       }
+    },
+    
+    scrollStagesLeft() {
+      const container = this.$refs.stagesScrollContainer;
+      if (container) {
+        container.scrollBy({
+          left: -200,
+          behavior: 'smooth'
+        });
+      }
+    },
+    
+    scrollStagesRight() {
+      const container = this.$refs.stagesScrollContainer;
+      if (container) {
+        container.scrollBy({
+          left: 200,
+          behavior: 'smooth'
+        });
+      }
+    },
+    
+    updateScrollButtons() {
+      const container = this.$refs.stagesScrollContainer;
+      if (container) {
+        this.canScrollLeft = container.scrollLeft > 0;
+        this.canScrollRight = container.scrollLeft < (container.scrollWidth - container.clientWidth);
+      }
     }
   }
 };
@@ -445,14 +499,77 @@ export default {
 .tournament-stages-nav {
   width: 100%;
   margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: var(--lego-border-radius);
+  border: 2px solid var(--lego-yellow);
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  
+  .nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    
+    h3 {
+      margin: 0;
+      color: var(--lego-black);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      &::before {
+        content: "🏆";
+        font-size: 1.3rem;
+      }
+    }
+    
+    .nav-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .nav-scroll-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--lego-yellow);
+      border: 2px solid var(--lego-dark-yellow, #e0a800);
+      color: var(--lego-black);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      
+      &:hover:not(:disabled) {
+        background: var(--lego-dark-yellow, #e0a800);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+      
+      &:disabled {
+        background: var(--lego-light-grey);
+        border-color: var(--lego-grey);
+        color: var(--lego-dark-grey);
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+      
+      i {
+        font-size: 0.9rem;
+      }
+    }
+  }
   
   .stages-scroll-container {
     display: flex;
     overflow-x: auto;
     padding: 0.5rem 0;
-    margin: 0 auto;
-    justify-content: center;
-    flex-wrap: wrap;
+    gap: 0.5rem;
+    scroll-behavior: smooth;
     
     /* Стилизуем нативный скроллбар для лучшей интеграции в дизайн */
     scrollbar-width: thin;
@@ -470,14 +587,17 @@ export default {
     &::-webkit-scrollbar-thumb {
       background-color: var(--lego-yellow);
       border-radius: 4px;
-      border: 2px solid var(--lego-yellow);
+      border: 1px solid var(--lego-dark-yellow, #e0a800);
+      
+      &:hover {
+        background-color: var(--lego-dark-yellow, #e0a800);
+      }
     }
   }
   
   .stage-nav-button {
     flex: 0 0 auto;
-    padding: 0.5rem 1rem;
-    margin: 0.25rem;
+    padding: 0.8rem 1.2rem;
     border-radius: var(--lego-border-radius);
     background-color: var(--lego-light-grey);
     color: var(--lego-dark-grey);
@@ -485,22 +605,102 @@ export default {
     cursor: pointer;
     font-weight: bold;
     white-space: nowrap;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     
     &:hover {
       background-color: var(--lego-grey);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
     
     &.active-stage {
-      background-color: rgba(255, 193, 7, 0.7); // Немного приглушенный желтый для активной стадии
+      background: linear-gradient(135deg, rgba(255, 193, 7, 0.8) 0%, rgba(255, 193, 7, 0.6) 100%);
       color: var(--lego-black);
+      border-color: var(--lego-dark-yellow, #e0a800);
+      
+      .stage-button-content {
+        .stage-status {
+          background: var(--lego-green);
+          color: white;
+        }
+      }
     }
     
     &.selected-stage {
-      background-color: var(--lego-yellow);
+      background: linear-gradient(135deg, var(--lego-yellow) 0%, var(--lego-dark-yellow, #e0a800) 100%);
       color: var(--lego-black);
-      border-color: var(--lego-dark-yellow);
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      border-color: var(--lego-dark-yellow, #e0a800);
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+      transform: translateY(-2px);
+    }
+    
+    .stage-button-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      
+      .stage-name {
+        font-size: 0.9rem;
+        font-weight: bold;
+      }
+      
+      .stage-status {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        background: var(--lego-blue);
+        color: white;
+        border-radius: 10px;
+        font-weight: normal;
+      }
+    }
+  }
+  
+  // Адаптивность для мобильных устройств
+  @media (max-width: 768px) {
+    padding: 0.8rem;
+    
+    .nav-header {
+      flex-direction: column;
+      gap: 0.8rem;
+      align-items: stretch;
+      
+      h3 {
+        text-align: center;
+        font-size: 1.1rem;
+      }
+      
+      .nav-controls {
+        justify-content: center;
+      }
+      
+      .nav-scroll-btn {
+        width: 35px;
+        height: 35px;
+        
+        i {
+          font-size: 0.8rem;
+        }
+      }
+    }
+    
+    .stage-nav-button {
+      min-width: 100px;
+      padding: 0.6rem 1rem;
+      
+      .stage-button-content {
+        .stage-name {
+          font-size: 0.8rem;
+        }
+        
+        .stage-status {
+          font-size: 0.65rem;
+          padding: 0.15rem 0.4rem;
+        }
+      }
     }
   }
 }

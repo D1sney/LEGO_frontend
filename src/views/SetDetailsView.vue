@@ -98,6 +98,9 @@
           </div>
         </div>
       </div>
+      
+      <!-- Отображение кубков -->
+      <TrophyDisplay :trophies="setTrophies" />
     </div>
     
     <div v-else class="no-data">
@@ -110,16 +113,19 @@
 <script>
 import { mapGetters, mapActions } from "vuex";
 import PhotoGallery from "@/components/PhotoGallery.vue";
+import TrophyDisplay from "@/components/TrophyDisplay.vue";
 
 export default {
   name: "SetDetailsView",
   components: {
-    PhotoGallery
+    PhotoGallery,
+    TrophyDisplay
   },
   data() {
     return {
       defaultSetImage: require("@/assets/images/default-set.png"),
-      defaultFigureImage: require("@/assets/images/default-figure.png")
+      defaultFigureImage: require("@/assets/images/default-figure.png"),
+      setTrophies: []
     };
   },
   computed: {
@@ -153,14 +159,32 @@ export default {
     async retryFetch() {
       try {
         await this.fetchSetById(this.$route.params.id);
+        await this.fetchSetTrophies();
       } catch (error) {
         console.error("Error while retrying to fetch set data:", error);
+      }
+    },
+    async fetchSetTrophies() {
+      if (!this.set) return;
+      
+      try {
+        // Получаем список всех победителей турниров наборов
+        const winnersData = await this.$store.dispatch('fetchTournamentWinners', { type: 'sets' });
+        
+        // Фильтруем кубки для текущего набора
+        const winners = winnersData.winners || winnersData;
+        this.setTrophies = winners.filter(winner => winner.set_id === this.set.set_id);
+        
+      } catch (error) {
+        console.error('Ошибка при загрузке кубков набора:', error);
+        this.setTrophies = [];
       }
     }
   },
   async mounted() {
     try {
       await this.fetchSetById(this.$route.params.id);
+      await this.fetchSetTrophies();
     } catch (error) {
       console.error("Error while fetching set data:", error);
     }

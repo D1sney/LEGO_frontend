@@ -17,7 +17,8 @@ export default createStore({
       isAuthenticated: !!localStorage.getItem('auth_token')
     },
     tournaments: [],
-    currentTournament: null
+    currentTournament: null,
+    tournamentWinners: []
   },
   getters: {
     getSets: state => state.sets,
@@ -89,6 +90,9 @@ export default createStore({
     },
     SET_CURRENT_TOURNAMENT(state, tournament) {
       state.currentTournament = tournament;
+    },
+    SET_TOURNAMENT_WINNERS(state, winners) {
+      state.tournamentWinners = winners;
     }
   },
   actions: {
@@ -804,6 +808,44 @@ export default createStore({
         throw error;
       } finally {
         commit('SET_LOADING', false);
+      }
+    },
+    
+    // Получить список победителей турниров
+    async fetchTournamentWinners({ commit }, { type = null, limit = 100, skip = 0 } = {}) {
+      try {
+        commit('SET_LOADING', true);
+        
+        const params = { limit, skip };
+        if (type) {
+          params.type = type;
+        }
+        
+        const response = await axios.get('/tournament-winners/', { params });
+        
+        commit('SET_TOURNAMENT_WINNERS', response.data.winners || response.data);
+        
+        return response.data;
+      } catch (error) {
+        console.error('Ошибка при загрузке победителей турниров:', error);
+        commit('SET_ERROR', error.response?.data?.detail || 'Ошибка при загрузке победителей турниров');
+        throw error;
+      } finally {
+        commit('SET_LOADING', false);
+      }
+    },
+    
+    // Получить победителя конкретного турнира
+    async fetchTournamentWinner({ commit }, tournamentId) {
+      try {
+        const response = await axios.get(`/tournament-winners/tournament/${tournamentId}`);
+        return response.data;
+      } catch (error) {
+        console.error('Ошибка при загрузке победителя турнира:', error);
+        if (error.response?.status !== 404) {
+          commit('SET_ERROR', error.response?.data?.detail || 'Ошибка при загрузке победителя турнира');
+        }
+        throw error;
       }
     }
   }

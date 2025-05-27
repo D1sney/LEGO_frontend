@@ -95,6 +95,9 @@
           </div>
         </div>
       </div>
+      
+      <!-- Отображение кубков -->
+      <TrophyDisplay :trophies="minifigureTrophies" />
     </div>
     
     <div v-else class="no-data">
@@ -107,16 +110,19 @@
 <script>
 import { mapGetters, mapActions } from "vuex";
 import PhotoGallery from "@/components/PhotoGallery.vue";
+import TrophyDisplay from "@/components/TrophyDisplay.vue";
 
 export default {
   name: "MinifigureDetailsView",
   components: {
-    PhotoGallery
+    PhotoGallery,
+    TrophyDisplay
   },
   data() {
     return {
       defaultSetImage: require("@/assets/images/default-set.png"),
-      defaultFigureImage: require("@/assets/images/default-figure.png")
+      defaultFigureImage: require("@/assets/images/default-figure.png"),
+      minifigureTrophies: []
     };
   },
   computed: {
@@ -151,9 +157,26 @@ export default {
       try {
         console.log("Повторная попытка загрузки минифигурки с ID:", this.$route.params.id);
         await this.fetchMinifigureById(this.$route.params.id);
+        await this.fetchMinifigureTrophies();
         console.log("Данные получены:", this.minifigure);
       } catch (error) {
         console.error("Error while retrying to fetch minifigure data:", error);
+      }
+    },
+    async fetchMinifigureTrophies() {
+      if (!this.minifigure) return;
+      
+      try {
+        // Получаем список всех победителей турниров минифигурок
+        const winnersData = await this.$store.dispatch('fetchTournamentWinners', { type: 'minifigures' });
+        
+        // Фильтруем кубки для текущей минифигурки
+        const winners = winnersData.winners || winnersData;
+        this.minifigureTrophies = winners.filter(winner => winner.minifigure_id === this.minifigure.minifigure_id);
+        
+      } catch (error) {
+        console.error('Ошибка при загрузке кубков минифигурки:', error);
+        this.minifigureTrophies = [];
       }
     }
   },
@@ -161,6 +184,7 @@ export default {
     try {
       console.log("Загрузка данных минифигурки с ID:", this.$route.params.id);
       await this.fetchMinifigureById(this.$route.params.id);
+      await this.fetchMinifigureTrophies();
       console.log("Данные получены:", this.minifigure);
     } catch (error) {
       console.error("Error while fetching minifigure data:", error);

@@ -1,13 +1,14 @@
 <template>
   <div class="register-container">
-    <div class="register-card">
+    <!-- Форма регистрации -->
+    <div v-if="!showVerification" class="register-card">
       <h1>Регистрация</h1>
       
       <div v-if="error" class="error-message">
         {{ error }}
       </div>
       
-      <form @submit.prevent="register">
+      <form @submit.prevent="requestEmailVerification">
         <div class="form-group">
           <label for="username">Имя пользователя</label>
           <input 
@@ -16,6 +17,8 @@
             v-model="userData.username" 
             required
             autocomplete="username"
+            minlength="3"
+            maxlength="50"
           />
         </div>
         
@@ -38,12 +41,13 @@
             v-model="userData.password" 
             required
             autocomplete="new-password"
+            minlength="8"
           />
         </div>
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" :disabled="loading">
-            {{ loading ? 'Регистрация...' : 'Зарегистрироваться' }}
+            {{ loading ? 'Отправка кода...' : 'Продолжить' }}
           </button>
         </div>
       </form>
@@ -52,14 +56,27 @@
         Уже есть аккаунт? <router-link to="/login">Войдите</router-link>
       </div>
     </div>
+    
+    <!-- Форма верификации email -->
+    <EmailVerificationForm 
+      v-if="showVerification"
+      :email="userData.email"
+      @verified="onEmailVerified"
+      @back="showVerification = false"
+    />
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
+import EmailVerificationForm from '@/components/EmailVerificationForm.vue';
+import axios from 'axios';
 
 export default {
   name: 'RegisterView',
+  components: {
+    EmailVerificationForm
+  },
   data() {
     return {
       userData: {
@@ -67,113 +84,85 @@ export default {
         email: '',
         password: ''
       },
-      registrationSuccess: false
+      showVerification: false,
+      loading: false,
+      error: null
     };
   },
   computed: {
     ...mapGetters({
-      loading: 'isLoading',
-      error: 'getError'
+      storeLoading: 'isLoading',
+      storeError: 'getError'
     })
   },
   methods: {
-    async register() {
+    async requestEmailVerification() {
+      // Очищаем предыдущие ошибки
+      this.error = null;
+      
+      // Базовая валидация
+      if (!this.userData.username || this.userData.username.trim().length < 3) {
+        this.error = 'Имя пользователя должно содержать не менее 3 символов';
+        return;
+      }
+      
+      if (!this.userData.email || !this.validateEmail(this.userData.email)) {
+        this.error = 'Введите корректный email';
+        return;
+      }
+      
+      if (!this.userData.password || this.userData.password.length < 8) {
+        this.error = 'Пароль должен содержать не менее 8 символов';
+        return;
+      }
+      
+      this.loading = true;
+      
       try {
-        // Очищаем предыдущие ошибки
-        this.$store.commit('SET_ERROR', null);
-        
-        // Базовая валидация
-        if (!this.userData.username || !this.userData.username.trim()) {
-          this.$store.commit('SET_ERROR', 'Имя пользователя не может быть пустым');
-          return;
-        }
-        
-        if (!this.userData.email || !this.validateEmail(this.userData.email)) {
-          this.$store.commit('SET_ERROR', 'Введите корректный email');
-          return;
-        }
-        
-        if (!this.userData.password || this.userData.password.length < 6) {
-          this.$store.commit('SET_ERROR', 'Пароль должен содержать не менее 6 символов');
-          return;
-        }
-        
-        console.log('Отправка формы регистрации. Данные:', {
+        console.log('Отправка запроса на верификацию email:', {
           username: this.userData.username,
           email: this.userData.email,
           password: '********' // Не логируем реальный пароль
         });
         
-        try {
-          // Сначала пробуем отправить через Vuex/axios
-          await this.$store.dispatch('register', this.userData);
-        } catch (axiosError) {
-          // Если получаем ошибку CORS (405), пробуем использовать прямой fetch запрос
-          if (axiosError.response && axiosError.response.status === 405) {
-            console.log('Получена ошибка 405, пробуем использовать прямой fetch запрос');
-            const result = await this.registerWithFetch();
-            if (!result.success) {
-              throw new Error(result.message);
-            }
-          } else {
-            // Если это другая ошибка, пробрасываем её дальше
-            throw axiosError;
-          }
-        }
+        // Отправляем запрос на верификацию email
+        await axios.post('/users/request-email-verification', this.userData);
         
-        this.registrationSuccess = true;
-        console.log('Регистрация успешна, выполняем автоматический вход');
+        // Переходим к форме верификации
+        this.showVerification = true;
+        
+      } catch (error) {
+        console.error('Ошибка при запросе верификации email:', error);
+        
+        if (error.response?.data?.detail) {
+          this.error = error.response.data.detail;
+        } else {
+          this.error = 'Ошибка при отправке кода подтверждения. Попробуйте еще раз.';
+        }
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    async onEmailVerified(userData) {
+      try {
+        console.log('Email успешно подтвержден, выполняем автоматический вход');
         
         // Автоматически выполняем вход после успешной регистрации
         const formData = new URLSearchParams();
         formData.append('username', this.userData.email);  // Используем email для логина
         formData.append('password', this.userData.password);
         
-        console.log('Данные для автологина после регистрации:', {
-          username: this.userData.email, // Используется email как username при логине
-          password: '********'
-        });
-        
         await this.$store.dispatch('login', formData);
         await this.$store.dispatch('fetchCurrentUser');
         
         // Перенаправляем на главную страницу
         this.$router.push('/');
+        
       } catch (error) {
-        console.error('Ошибка регистрации:', error);
-        // Обработка ошибки происходит в хранилище
-      }
-    },
-    
-    // Альтернативный метод регистрации без использования axios
-    async registerWithFetch() {
-      try {
-        this.$store.commit('SET_LOADING', true);
-        
-        const response = await fetch('http://localhost:8000/users/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(this.userData)
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-          const errorMessage = data.detail || 'Ошибка регистрации';
-          this.$store.commit('SET_ERROR', errorMessage);
-          return { success: false, message: errorMessage };
-        }
-        
-        return { success: true, data };
-      } catch (error) {
-        console.error('Ошибка при выполнении fetch запроса:', error);
-        this.$store.commit('SET_ERROR', 'Не удалось подключиться к серверу');
-        return { success: false, message: 'Не удалось подключиться к серверу' };
-      } finally {
-        this.$store.commit('SET_LOADING', false);
+        console.error('Ошибка при автоматическом входе:', error);
+        // Если автоматический вход не удался, перенаправляем на страницу входа
+        this.$router.push('/login');
       }
     },
     

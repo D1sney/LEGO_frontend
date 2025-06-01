@@ -10,6 +10,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/collection',
+    name: 'collection',
+    component: () => import(/* webpackChunkName: "collection" */ '../views/CollectionView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/sets/:id',
     name: 'set-details',
     // Lazy-loaded компонент

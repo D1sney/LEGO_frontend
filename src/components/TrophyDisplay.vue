@@ -1,7 +1,7 @@
 <template>
   <div v-if="trophies && trophies.length > 0" class="trophy-display">
     <h3 class="trophy-title">
-      <i class="fas fa-trophy trophy-icon"></i>
+      <img src="@/assets/images/trophy.png" alt="Trophy" class="trophy-icon-img">
       Кубки победителя
     </h3>
     
@@ -14,7 +14,7 @@
         :title="`Победитель турнира: ${trophy.tournament?.title || 'Турнир #' + trophy.tournament_id}`"
       >
         <div class="trophy-icon-container">
-          <i class="fas fa-trophy"></i>
+          <img src="@/assets/images/trophy.png" alt="Trophy" class="trophy-icon-img">
         </div>
         
         <div class="trophy-info">
@@ -78,9 +78,9 @@ export default {
     color: #b8860b;
     font-size: 1.3rem;
     
-    .trophy-icon {
-      color: #ffd700;
-      font-size: 1.5rem;
+    .trophy-icon-img {
+      width: 24px;
+      height: 24px;
     }
   }
   
@@ -118,9 +118,9 @@ export default {
       border-radius: 50%;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       
-      i {
-        color: #b8860b;
-        font-size: 1.2rem;
+      img {
+        width: 24px;
+        height: 24px;
       }
     }
     

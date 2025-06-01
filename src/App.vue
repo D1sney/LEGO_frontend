@@ -2,13 +2,14 @@
   <div id="app" class="lego-app">
     <header class="lego-header">
       <div class="lego-logo">
-        <img src="@/assets/logo.png" alt="LEGO Logo">
+        <img src="@/assets/images/logo-collector.png" alt="LEGO Collector Logo">
         <h1>Моя коллекция LEGO</h1>
       </div>
 
       <div class="header-controls">
         <nav class="main-nav">
-          <router-link to="/" class="nav-link">Коллекция</router-link>
+          <router-link to="/" class="nav-link">Главная</router-link>
+          <router-link to="/collection" class="nav-link">Коллекция</router-link>
           <router-link to="/tournaments" class="nav-link">Турниры</router-link>
         </nav>
         
@@ -121,7 +122,79 @@
     </main>
 
     <footer class="lego-footer">
-      <p>© {{ new Date().getFullYear() }} Моя коллекция LEGO</p>
+      <div class="footer-content">
+        <div class="footer-section">
+          <div class="footer-logo">
+            <img src="@/assets/images/logo-collector.png" alt="LEGO Collector Logo">
+            <h3>LEGO Collector</h3>
+          </div>
+          <p class="footer-description">
+            Ваша персональная платформа для управления коллекцией LEGO наборов и минифигурок
+          </p>
+        </div>
+        
+        <div class="footer-section">
+          <h4>Навигация</h4>
+          <ul class="footer-links">
+            <li><router-link to="/">Главная</router-link></li>
+            <li><router-link to="/collection">Коллекция</router-link></li>
+            <li><router-link to="/collection?type=sets">Наборы</router-link></li>
+            <li><router-link to="/collection?type=minifigures">Минифигурки</router-link></li>
+            <li><router-link to="/tournaments">Турниры</router-link></li>
+          </ul>
+        </div>
+        
+        <div class="footer-section">
+          <h4>Информация</h4>
+          <ul class="footer-links">
+            <li><a href="#" @click.prevent>О проекте</a></li>
+            <li><a href="#" @click.prevent>Контакты</a></li>
+            <li><a href="#" @click.prevent>Помощь</a></li>
+            <li><a href="#" @click.prevent>API</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-section">
+          <h4>Статистика</h4>
+          <div class="footer-stats">
+            <div class="footer-stat">
+              <i class="fas fa-cubes"></i>
+              <span>Наборы в коллекции</span>
+            </div>
+            <div class="footer-stat">
+              <i class="fas fa-users"></i>
+              <span>Минифигурки</span>
+            </div>
+            <div class="footer-stat">
+              <img src="@/assets/images/trophy.png" alt="Trophy" class="footer-trophy">
+              <span>Турниры</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <div class="footer-decorations">
+          <div class="lego-brick red"></div>
+          <div class="lego-brick yellow"></div>
+          <div class="lego-brick blue"></div>
+          <div class="lego-brick green"></div>
+        </div>
+        
+        <div class="footer-copyright">
+          <p>© {{ new Date().getFullYear() }} LEGO Collector. Создано с ❤️ для любителей LEGO</p>
+          <p class="footer-disclaimer">
+            LEGO® является торговой маркой группы компаний LEGO. Данный сайт не связан с LEGO Group.
+          </p>
+        </div>
+        
+        <div class="footer-decorations">
+          <div class="lego-brick green"></div>
+          <div class="lego-brick blue"></div>
+          <div class="lego-brick yellow"></div>
+          <div class="lego-brick red"></div>
+        </div>
+      </div>
     </footer>
   </div>
 </template>
@@ -505,11 +578,191 @@ body {
 }
 
 .lego-footer {
-  background-color: var(--lego-dark-gray);
+  background: linear-gradient(135deg, var(--lego-dark-gray) 0%, #2c3e50 100%);
   color: white;
-  text-align: center;
-  padding: 1rem;
   margin-top: auto;
+  
+  .footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 2rem 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    
+    .footer-section {
+      h4 {
+        color: var(--lego-yellow);
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        font-weight: bold;
+      }
+      
+      .footer-logo {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        
+        img {
+          width: 50px;
+          height: 50px;
+        }
+        
+        h3 {
+          color: var(--lego-yellow);
+          font-size: 1.5rem;
+          margin: 0;
+        }
+      }
+      
+      .footer-description {
+        color: #bdc3c7;
+        line-height: 1.6;
+        margin-bottom: 0;
+      }
+      
+      .footer-links {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        
+        li {
+          margin-bottom: 0.5rem;
+          
+          a {
+            color: #bdc3c7;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            
+            &:hover {
+              color: var(--lego-yellow);
+            }
+          }
+        }
+      }
+      
+      .footer-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        
+        .footer-stat {
+          display: flex;
+          align-items: center;
+          gap: 0.8rem;
+          color: #bdc3c7;
+          
+          i {
+            color: var(--lego-yellow);
+            font-size: 1.1rem;
+            width: 20px;
+          }
+          
+          .footer-trophy {
+            width: 20px;
+            height: 20px;
+          }
+          
+          span {
+            font-size: 0.9rem;
+          }
+        }
+      }
+    }
+  }
+  
+  .footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+    
+    .footer-decorations {
+      display: flex;
+      gap: 0.5rem;
+      
+      .lego-brick {
+        width: 20px;
+        height: 20px;
+        border-radius: 3px;
+        position: relative;
+        
+        &::before {
+          content: '';
+          position: absolute;
+          top: 2px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.3);
+        }
+        
+        &.red {
+          background: var(--lego-red);
+        }
+        
+        &.yellow {
+          background: var(--lego-yellow);
+        }
+        
+        &.blue {
+          background: var(--lego-blue);
+        }
+        
+        &.green {
+          background: var(--lego-green);
+        }
+      }
+    }
+    
+    .footer-copyright {
+      text-align: center;
+      flex: 1;
+      
+      p {
+        margin: 0;
+        color: #bdc3c7;
+        
+        &:first-child {
+          font-size: 1rem;
+          margin-bottom: 0.3rem;
+        }
+        
+        &.footer-disclaimer {
+          font-size: 0.8rem;
+          color: #95a5a6;
+        }
+      }
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .footer-content {
+      grid-template-columns: 1fr;
+      padding: 2rem 1rem 1rem;
+      gap: 1.5rem;
+    }
+    
+    .footer-bottom {
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+      
+      .footer-decorations {
+        order: 1;
+      }
+      
+      .footer-copyright {
+        order: 2;
+      }
+    }
+  }
 }
 
 .header-controls {

@@ -3,7 +3,7 @@ import store from '../store'
 import router from '../router'
 
 // Базовый URL для всех запросов
-axios.defaults.baseURL = process.env.VUE_APP_API_URL || 'http://localhost:8000'
+axios.defaults.baseURL = process.env.VUE_APP_API_URL || '/api'
 
 // Отключаем withCredentials для предотвращения OPTIONS запросов CORS
 axios.defaults.withCredentials = false

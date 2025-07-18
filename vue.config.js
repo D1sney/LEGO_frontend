@@ -1,8 +1,8 @@
 module.exports = {
   devServer: {
     proxy: {
-      '/users': {
-        target: 'http://localhost:8000',
+      '/api': {
+        target: process.env.VUE_APP_API_URL || 'http://localhost:8000',
         changeOrigin: true,
         logLevel: 'debug',
         followRedirects: true,
@@ -11,27 +11,6 @@ module.exports = {
           console.log(`Прокси запрос к: ${proxyReq.path}`);
           proxyReq.removeHeader('Origin');
         }
-      },
-      '/sets': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        logLevel: 'debug',
-        followRedirects: true,
-        secure: false
-      },
-      '/minifigures': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        logLevel: 'debug',
-        followRedirects: true,
-        secure: false
-      },
-      '/tags': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        logLevel: 'debug',
-        followRedirects: true,
-        secure: false
       }
     }
   },
